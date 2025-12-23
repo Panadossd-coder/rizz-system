@@ -1,174 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Rizz System Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rizz System Dashboard</title>
 
-  <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      padding: 20px;
-    }
+<style>
+body {
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+  padding:20px;
+}
+h1 { font-size:34px; margin-bottom:20px; }
+input {
+  padding:12px;
+  width:65%;
+  border-radius:12px;
+  border:none;
+  font-size:16px;
+}
+button {
+  padding:12px 16px;
+  border:none;
+  border-radius:12px;
+  margin:5px;
+  font-size:14px;
+  cursor:pointer;
+}
+.add { background:#eaeaea; color:#000; }
+.card {
+  margin-top:25px;
+}
+.label {
+  font-size:18px;
+  margin-bottom:6px;
+}
+.status {
+  padding:4px 10px;
+  border-radius:8px;
+  font-size:12px;
+  margin-left:8px;
+}
+.ACTIVE { background:#444; }
+.FOCUS { background:#00ff99; color:#000; }
+.PAUSE { background:#ffcc00; color:#000; }
 
-    h1 {
-      font-size: 32px;
-      margin-bottom: 20px;
-    }
+.bar {
+  width:100%;
+  height:10px;
+  background:#333;
+  border-radius:10px;
+  overflow:hidden;
+}
+.fill {
+  height:100%;
+  background:#00ff99;
+}
 
-    input, button {
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-    }
-
-    input {
-      width: 65%;
-      margin-right: 10px;
-    }
-
-    button {
-      background: #eaeaea;
-      cursor: pointer;
-    }
-
-    .card {
-      margin-top: 25px;
-    }
-
-    .name {
-      font-weight: bold;
-      font-size: 18px;
-    }
-
-    .badge {
-      margin-left: 8px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-
-    .focus { background: #00ff88; color: #000; }
-    .pause { background: #777; }
-    .active { background: #444; }
-
-    .bar {
-      height: 10px;
-      background: #333;
-      border-radius: 6px;
-      margin: 8px 0;
-    }
-
-    .fill {
-      height: 100%;
-      background: #00ff88;
-      border-radius: 6px;
-      width: 0%;
-    }
-
-    .controls button {
-      margin-right: 6px;
-      margin-top: 8px;
-    }
-  </style>
+.controls button {
+  background:#eee;
+  color:#000;
+}
+.delete {
+  background:#ff4444;
+  color:#fff;
+}
+</style>
 </head>
 
 <body>
 
 <h1>🔥 Rizz System Dashboard</h1>
 
-<input id="nameInput" placeholder="Enter name (e.g. Charity)">
-<button onclick="addPerson()">Add / Update</button>
+<input id="nameInput" placeholder="Enter name (e.g. Charity)" />
+<button class="add" onclick="addOrUpdate()">Add / Update</button>
 
 <div id="list"></div>
 
 <script>
-  let people = JSON.parse(localStorage.getItem("rizz")) || [];
+let data = JSON.parse(localStorage.getItem("rizzData")) || [];
 
-  function save() {
-    localStorage.setItem("rizz", JSON.stringify(people));
+function save() {
+  localStorage.setItem("rizzData", JSON.stringify(data));
+}
+
+function render() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="label">
+        ${p.name} — ${p.score}%
+        <span class="status ${p.status}">${p.status}</span>
+      </div>
+      <div class="bar">
+        <div class="fill" style="width:${p.score}%"></div>
+      </div>
+      <div class="controls">
+        <button onclick="changeScore(${i}, -10)">-10</button>
+        <button onclick="changeScore(${i}, 10)">+10</button>
+        <button onclick="setStatus(${i}, 'FOCUS')">Focus</button>
+        <button onclick="setStatus(${i}, 'PAUSE')">Pause</button>
+        <button onclick="setStatus(${i}, 'ACTIVE')">Active</button>
+        <button class="delete" onclick="remove(${i})">Delete</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function addOrUpdate() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return;
+
+  let found = data.find(p => p.name.toLowerCase() === name.toLowerCase());
+
+  if (!found) {
+    data.push({ name, score: 0, status: "ACTIVE" });
   }
 
-  function autoFocus() {
-    let activePeople = people.filter(p => p.status !== "pause");
-    if (activePeople.length === 0) return;
-
-    let top = activePeople.reduce((a, b) => a.score > b.score ? a : b);
-    people.forEach(p => p.status = p === top ? "focus" : p.status === "pause" ? "pause" : "active");
-  }
-
-  function addPerson() {
-    let name = document.getElementById("nameInput").value.trim();
-    if (!name) return;
-
-    let existing = people.find(p => p.name === name);
-    if (!existing) {
-      people.push({ name, score: 0, status: "active" });
-    }
-
-    autoFocus();
-    save();
-    render();
-    document.getElementById("nameInput").value = "";
-  }
-
-  function changeScore(i, delta) {
-    people[i].score = Math.max(0, Math.min(100, people[i].score + delta));
-    autoFocus();
-    save();
-    render();
-  }
-
-  function setStatus(i, status) {
-    people[i].status = status;
-    autoFocus();
-    save();
-    render();
-  }
-
-  function del(i) {
-    people.splice(i, 1);
-    autoFocus();
-    save();
-    render();
-  }
-
-  function render() {
-    let list = document.getElementById("list");
-    list.innerHTML = "";
-
-    people.forEach((p, i) => {
-      let badge =
-        p.status === "focus" ? "focus" :
-        p.status === "pause" ? "pause" : "active";
-
-      list.innerHTML += `
-        <div class="card">
-          <div class="name">
-            ${p.name} — ${p.score}%
-            <span class="badge ${badge}">${p.status.toUpperCase()}</span>
-          </div>
-
-          <div class="bar">
-            <div class="fill" style="width:${p.score}%"></div>
-          </div>
-
-          <div class="controls">
-            <button onclick="changeScore(${i}, -10)">-10</button>
-            <button onclick="changeScore(${i}, 10)">+10</button>
-            <button onclick="setStatus(${i}, 'active')">Active</button>
-            <button onclick="setStatus(${i}, 'pause')">Pause</button>
-            <button onclick="del(${i})">Delete</button>
-          </div>
-        </div>
-      `;
-    });
-  }
-
+  document.getElementById("nameInput").value = "";
+  save();
   render();
+}
+
+function changeScore(i, amt) {
+  data[i].score = Math.max(0, Math.min(100, data[i].score + amt));
+  save();
+  render();
+}
+
+function setStatus(i, status) {
+  if (status === "FOCUS") {
+    data.forEach(p => p.status = "ACTIVE");
+  }
+  data[i].status = status;
+  save();
+  render();
+}
+
+function remove(i) {
+  data.splice(i, 1);
+  save();
+  render();
+}
+
+render();
 </script>
 
 </body>
