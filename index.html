@@ -1,447 +1,175 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Rizz System — Version1 + Predictions (Phase A)</title>
+<meta charset="UTF-8">
+<title>🔥 Rizz System — Version 1 (Phase A)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-:root{
-  --bg:#000; --fg:#fff; --muted:#9aa0a6; --accent:#00d18a; --warn:#ffb300; --card:#0c0c0c;
+body {
+  background:#000;
+  color:#fff;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding:20px;
 }
-html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,Arial}
-.wrap{max-width:920px;margin:18px auto;padding:14px}
-h1{font-size:28px;margin:0 0 10px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
-.input{flex:1;padding:12px;border-radius:12px;border:none;background:#111;color:var(--fg)}
-.btn{padding:10px 14px;border-radius:12px;border:none;background:#e6eef6;color:#002b5b;font-weight:700;cursor:pointer}
-.small{padding:8px 10px}
-.banner{display:none;padding:12px;border-radius:10px;background:var(--warn);color:#000;margin-bottom:12px}
-.list{margin-top:12px}
-.person{background:var(--card);padding:12px;border-radius:12px;margin-bottom:12px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.title{font-weight:800;font-size:18px}
-.badge{padding:6px 10px;border-radius:12px;background:#222;color:#ddd;font-weight:700}
-.badge.focus{background:var(--accent);color:#001}
-.progressWrap{height:12px;background:#222;border-radius:999px;overflow:hidden;margin:8px 0}
-.progress{height:100%;background:linear-gradient(90deg,var(--accent),#00f2b1);width:0;transition:width .25s ease}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.action{padding:8px 10px;border-radius:10px;background:#fff;color:#003a8c;border:none;cursor:pointer;font-weight:700}
-.screenshotThumb{height:48px;width:48px;object-fit:cover;border-radius:8px;margin-left:8px;border:2px solid #222}
-.predPanel{background:#07110a;padding:12px;border-radius:10px;margin-top:12px}
-.predItem{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed #122}
-.predLabel{padding:4px 8px;border-radius:8px;font-weight:700}
-.most{background:#00ffb3;color:#001}
-.potential{background:#ffd86a;color:#000}
-.low{background:#666;color:#ddd}
-.muted{color:var(--muted);font-size:13px;margin-top:12px}
-.footer{height:48px}
-@media(max-width:520px){ .title{font-size:16px} .btn{padding:8px 10px} }
+h1 { font-size:26px; }
+input, button {
+  padding:12px;
+  border-radius:14px;
+  border:none;
+  font-size:15px;
+}
+button { background:#eaeaea; }
+.card {
+  background:#0d0d0d;
+  border-radius:18px;
+  padding:16px;
+  margin-top:18px;
+}
+.bar {
+  height:10px;
+  background:#222;
+  border-radius:10px;
+  overflow:hidden;
+  margin:8px 0;
+}
+.fill {
+  height:100%;
+  background:linear-gradient(90deg,#00ff99,#00cc88);
+}
+.focus {
+  background:#00ff99;
+  color:#000;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:12px;
+}
+.thumb {
+  width:60px;
+  height:60px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-top:10px;
+}
+.row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.small { font-size:13px; opacity:.7; margin-top:6px; }
 </style>
 </head>
+
 <body>
-<div class="wrap">
-  <h1>🔥 Rizz System — Version 1 (Predictions)</h1>
 
-  <div id="banner" class="banner"></div>
+<h1>🔥 Rizz System — Version 1<br>(Phase A: Predictions)</h1>
 
-  <div class="controls">
-    <input id="nameIn" class="input" placeholder="Add name (e.g. Charity)" />
-    <button id="addBtn" class="btn">Add / Update</button>
-    <button id="decayBtn" class="btn small">Run Decay (test)</button>
-    <button id="predToggle" class="btn small">Show Predictions</button>
-    <button id="exportBtn" class="btn small" style="display:none">Export</button>
-  </div>
+<input id="nameInput" placeholder="Add name (e.g. Charity)">
+<button onclick="addPerson()">Add / Update</button>
+<button onclick="runDecay()">Run Decay (test)</button>
 
-  <div id="list" class="list"></div>
+<div id="list"></div>
 
-  <div id="predictions" class="predPanel" style="display:none">
-    <h3 style="margin:0 0 8px">Predictions — Who is most likely to become serious</h3>
-    <div id="predList"></div>
-    <div class="muted">Prediction score = progress% + status bonus + stability bonus − conflict penalty</div>
-  </div>
-
-  <div class="muted">Tip: Focus limit = 2. Auto-focus at ≥ 90%. You can attach small screenshots per person (thumbnails only).</div>
-
-  <div class="footer"></div>
-</div>
+<input type="file" id="filePicker" accept="image/*" hidden>
 
 <script>
-/* ---------- Config ---------- */
-const STORAGE_KEY = "rizz_v1_predictions";
-const FOCUS_LIMIT = 2;
-const DECAY_DAYS = 2;
-const DECAY_AMOUNT = 10;
-const AUTO_FOCUS_THRESHOLD = 90;
-const MAX_HISTORY = 6; // track last N scores for stability
-const SAVE_DEBOUNCE = 200;
+let data = JSON.parse(localStorage.getItem("rizz_v1")) || [];
+let attachTarget = null;
 
-/* ---------- State ---------- */
-let store = { people: [], lastDecayAt: Date.now() };
+function save() {
+  localStorage.setItem("rizz_v1", JSON.stringify(data));
+}
 
-/* ---------- Util ---------- */
-const now = ()=>Date.now();
-const clamp = (n,min=0,max=100)=> Math.max(min,Math.min(max,Math.round(n)));
-const uid = ()=> Math.random().toString(36).slice(2,9);
-
-function load(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(parsed && Array.isArray(parsed.people)) store = parsed;
-    }
-  }catch(e){
-    console.warn("load error",e);
-    store = { people: [], lastDecayAt: Date.now() };
+function addPerson() {
+  const name = nameInput.value.trim();
+  if (!name) return;
+  let p = data.find(x=>x.name===name);
+  if (!p) {
+    p = { name, score:0, focus:false, updated:Date.now(), shots:[] };
+    data.push(p);
   }
-}
-function save(){
-  clearTimeout(save._t);
-  save._t = setTimeout(()=> {
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch(e){ console.warn('save failed', e); }
-  }, SAVE_DEBOUNCE);
-}
-
-/* ---------- Banner ---------- */
-const banner = document.getElementById('banner');
-function show(msg,ms=2600){
-  banner.style.display = 'block';
-  banner.textContent = msg;
-  clearTimeout(banner._t);
-  banner._t = setTimeout(()=> banner.style.display = 'none', ms);
-}
-
-/* ---------- People operations ---------- */
-function getById(id){ return store.people.find(p=>p.id===id); }
-function findByName(name){ return store.people.find(p => p.name.toLowerCase() === name.toLowerCase()); }
-
-function addOrUpdate(name){
-  if(!name || !name.trim()) return show('Enter a name');
-  name = name.trim();
-  let p = findByName(name);
-  if(p){
-    p.lastUpdate = now();
-    show(`Updated ${p.name}`);
-  } else {
-    p = {
-      id: uid(), name, score: 0, status: 'active', focused:false, focusedAt:null,
-      history: [], screenshots: [], createdAt: now(), lastUpdate: now()
-    };
-    store.people.push(p);
-    show(`Added ${p.name}`);
-  }
+  p.updated = Date.now();
+  autoFocus();
   save();
-  postChange();
-}
-
-/* add score history record (after change) */
-function pushHistory(p, newScore){
-  p.history = p.history || [];
-  const last = p.history[p.history.length-1];
-  if(!last || last.score !== newScore){
-    p.history.push({ score: newScore, t: now() });
-    if(p.history.length > MAX_HISTORY) p.history.shift();
-  }
-}
-
-/* change score */
-function changeScore(id, delta){
-  const p = getById(id); if(!p) return;
-  p.score = clamp(p.score + delta);
-  p.lastUpdate = now();
-  pushHistory(p, p.score);
-  save();
-  // enforce auto-focus atomically
-  enforceAutoFocus();
   render();
+  nameInput.value="";
 }
 
-/* screenshots: small dataURLs (limit per person) */
-function handleScreenshot(id, file){
-  const p = getById(id); if(!p) return;
-  if(!file) return;
+function autoFocus() {
+  const focused = data.filter(p=>p.focus);
+  data.forEach(p=>{
+    if (p.score >= 90 && !p.focus && focused.length < 2) {
+      p.focus = true;
+    }
+  });
+  while (data.filter(p=>p.focus).length > 2) {
+    data.filter(p=>p.focus)[0].focus = false;
+  }
+}
+
+function changeScore(p, d) {
+  p.score = Math.max(0, Math.min(100, p.score + d));
+  p.updated = Date.now();
+  autoFocus();
+  save(); render();
+}
+
+function toggleFocus(p) {
+  if (!p.focus && data.filter(x=>x.focus).length >= 2) {
+    data.filter(x=>x.focus)[0].focus = false;
+  }
+  p.focus = !p.focus;
+  save(); render();
+}
+
+function runDecay() {
+  data.forEach(p=>{
+    const days = (Date.now() - p.updated) / (1000*60*60*24);
+    if (days >= 2) p.score = Math.max(0, p.score - 10);
+  });
+  save(); render();
+}
+
+function attach(p) {
+  attachTarget = p;
+  filePicker.click();
+}
+
+filePicker.onchange = e => {
+  const file = e.target.files[0];
+  if (!file || !attachTarget) return;
   const reader = new FileReader();
-  reader.onload = ()=> {
-    p.screenshots = p.screenshots || [];
-    // keep only last 3 thumbnails
-    p.screenshots.push(reader.result);
-    if(p.screenshots.length > 3) p.screenshots.shift();
+  reader.onload = () => {
+    attachTarget.shots.push(reader.result);
     save(); render();
   };
   reader.readAsDataURL(file);
+};
+
+function prediction(p) {
+  return Math.round(p.score + (p.focus?30:0));
 }
 
-/* toggle pause */
-function togglePause(id){
-  const p = getById(id); if(!p) return;
-  p.status = (p.status === 'paused') ? 'active' : 'paused';
-  if(p.status === 'paused' && p.focused){ p.focused = false; p.focusedAt = null; }
-  p.lastUpdate = now();
-  save(); postChange();
-}
-
-/* toggle focus manually (enforce limit) */
-function toggleFocus(id){
-  const p = getById(id); if(!p) return;
-  if(!p.focused){
-    const cur = store.people.filter(x=>x.focused);
-    if(cur.length >= FOCUS_LIMIT){
-      // demote oldest focused
-      cur.sort((a,b)=> (a.focusedAt||0) - (b.focusedAt||0));
-      cur[0].focused = false; cur[0].focusedAt = null;
-      show('⚠ Focus limit reached — oldest focus removed');
-    }
-    p.focused = true; p.focusedAt = now();
-  } else {
-    p.focused = false; p.focusedAt = null;
-  }
-  p.lastUpdate = now();
-  save(); postChange();
-}
-
-/* delete */
-function deletePerson(id){
-  const p = getById(id); if(!p) return;
-  if(!confirm(`Delete ${p.name}?`)) return;
-  store.people = store.people.filter(x=>x.id!==id);
-  save(); render();
-}
-
-/* ---------- Decay ---------- */
-function runDecay(force=false){
-  const last = store.lastDecayAt || now();
-  const msPerPeriod = DECAY_DAYS * 24 * 60 * 60 * 1000;
-  const elapsed = now() - last;
-  const steps = force ? 1 : Math.floor(elapsed / msPerPeriod);
-  if(steps <= 0 && !force) return;
-  store.people.forEach(p=>{
-    // skip focused or paused
-    if(p.focused || p.status === 'paused') return;
-    const total = DECAY_AMOUNT * steps;
-    if(total>0){
-      p.score = clamp(p.score - total);
-      p.lastUpdate = now();
-      pushHistory(p, p.score);
-    }
-  });
-  store.lastDecayAt = force ? now() : (last + steps * msPerPeriod);
-  save(); postChange();
-  show(`Decay applied (${steps || 1})`);
-}
-
-/* ---------- Predictions Logic ---------- */
-function computePrediction(p){
-  // base is progress %
-  let base = p.score || 0;
-  // status bonus
-  let statusBonus = 0;
-  if(p.focused) statusBonus = 25;
-  else if(p.status === 'paused') statusBonus = -12;
-  else statusBonus = 0;
-  // stability: small recent changes => bonus
-  let stabilityBonus = 0;
-  if(Array.isArray(p.history) && p.history.length >= 2){
-    // compute average absolute change between last 3 points
-    let deltas = [];
-    for(let i=1;i<p.history.length;i++) deltas.push(Math.abs(p.history[i].score - p.history[i-1].score));
-    const avg = deltas.reduce((a,b)=>a+b,0)/deltas.length;
-    if(avg <= 4) stabilityBonus = 10;
-    else if(avg <= 10) stabilityBonus = 5;
-  } else {
-    // short history but >=1 point - give small bonus for having any momentum
-    if(p.history && p.history.length === 1) stabilityBonus = 3;
-  }
-  // conflict penalty: if many high scorers
-  const highCount = store.people.filter(x=> (x.score||0) >= 80 ).length;
-  let conflictPenalty = 0;
-  if(highCount > 1) conflictPenalty = (highCount - 1) * 8; // small penalty per extra high competitor
-
-  const raw = base + statusBonus + stabilityBonus - conflictPenalty;
-  const score = clamp(Math.round(raw), 0, 150); // allow >100 in raw, but clamp for display
-  return { scoreRaw: raw, score: score, parts: { base, statusBonus, stabilityBonus, conflictPenalty } };
-}
-
-function getPredictionLabel(v){
-  if(v >= 110) return {label:'Most Likely', cls:'most'};
-  if(v >= 85) return {label:'Most Likely', cls:'most'};
-  if(v >= 70) return {label:'Potential', cls:'potential'};
-  return {label:'Low', cls:'low'};
-}
-
-/* ---------- Auto-focus enforcement ---------- */
-function enforceAutoFocus(){
-  // candidates who reach threshold
-  const candidates = store.people.filter(p => p.score >= AUTO_FOCUS_THRESHOLD && !p.focused && p.status !== 'paused');
-  if(candidates.length === 0) return;
-  // sort by score desc and apply one by one
-  candidates.sort((a,b)=> b.score - a.score);
-  candidates.forEach(p=>{
-    const cur = store.people.filter(x=>x.focused);
-    if(cur.length >= FOCUS_LIMIT){
-      cur.sort((a,b)=> (a.focusedAt||0) - (b.focusedAt||0));
-      cur[0].focused = false; cur[0].focusedAt = null;
-      show('⚠ Focus limit reached — oldest focus removed');
-    }
-    p.focused = true; p.focusedAt = now();
-    show(`⚡ Auto-Focus applied to ${p.name}`);
-  });
-  save(); render();
-}
-
-/* ---------- Post-change hook ---------- */
-function postChange(){
-  // run decay if needed and then auto-focus and render
-  runDecay(false);
-  enforceAutoFocus();
-  render();
-}
-
-/* ---------- Render UI ---------- */
-const listEl = document.getElementById('list');
-function render(){
-  listEl.innerHTML = '';
-  // sort: focused first, then prediction score desc, then name
-  const peopleCopy = [...store.people];
-  peopleCopy.sort((a,b)=>{
-    if(a.focused !== b.focused) return a.focused ? -1 : 1;
-    const pa = computePrediction(a).score;
-    const pb = computePrediction(b).score;
-    if(pb !== pa) return pb - pa;
-    return a.name.localeCompare(b.name);
-  });
-
-  peopleCopy.forEach(p=>{
-    const el = document.createElement('div');
-    el.className = 'person';
-    el.innerHTML = `
+function render() {
+  list.innerHTML="";
+  data.forEach(p=>{
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`
+      <b>${p.name} — ${p.score}%</b>
+      ${p.focus?'<span class="focus">FOCUS</span>':""}
+      <div class="bar"><div class="fill" style="width:${p.score}%"></div></div>
       <div class="row">
-        <div>
-          <div class="title">${escapeHtml(p.name)} — ${p.score}%</div>
-          <div style="margin-top:6px">
-            <span class="badge ${p.focused?'focus':''}">${p.focused ? 'FOCUS' : (p.status === 'paused' ? 'PAUSED' : 'ACTIVE')}</span>
-            <span style="color:var(--muted);margin-left:10px;font-size:13px">Updated ${timeAgo(p.lastUpdate)}</span>
-          </div>
-        </div>
-        <div>
-          ${p.screenshots && p.screenshots.length ? p.screenshots.map(s=>`<img class="screenshotThumb" src="${s}">`).join('') : ''}
-        </div>
+        <button onclick="changeScore(data[${data.indexOf(p)}],-10)">-10</button>
+        <button onclick="changeScore(data[${data.indexOf(p)}],10)">+10</button>
+        <button onclick="toggleFocus(data[${data.indexOf(p)}])">${p.focus?"Unfocus":"Focus"}</button>
+        <button onclick="attach(data[${data.indexOf(p)}])">📷 Attach</button>
+        <button onclick="data.splice(${data.indexOf(p)},1);save();render()">Delete</button>
       </div>
-
-      <div class="progressWrap"><div class="progress" style="width:${p.score}%"></div></div>
-
-      <div class="actions">
-        <button class="action" data-action="minus" data-id="${p.id}">-10</button>
-        <button class="action" data-action="plus" data-id="${p.id}">+10</button>
-        <button class="action" data-action="focus" data-id="${p.id}">${p.focused?'Unfocus':'Focus'}</button>
-        <button class="action" data-action="pause" data-id="${p.id}">${p.status==='paused'?'Resume':'Pause'}</button>
-        <label style="display:inline-block;cursor:pointer">
-          <input type="file" accept="image/*" data-upload="${p.id}" style="display:none">
-          <button class="action">📷 Attach</button>
-        </label>
-        <button class="action" data-action="delete" data-id="${p.id}" style="background:#ffb3b3">Delete</button>
-      </div>
-      <div style="margin-top:8px;color:var(--muted);font-size:13px">
-        Prediction: ${Math.round(computePrediction(p).score)} — ${getPredictionLabel(computePrediction(p).score).label}
-      </div>
+      <div class="small">Prediction: ${prediction(p)} — ${prediction(p)>110?"Most Likely":"Developing"}</div>
+      ${p.shots.map(s=>`<img class="thumb" src="${s}">`).join("")}
     `;
-    listEl.appendChild(el);
-  });
-
-  // update predictions panel if visible
-  if(document.getElementById('predictions').style.display !== 'none'){
-    updatePredictionsPanel();
-  }
-}
-
-/* ---------- Predictions panel ---------- */
-const predToggle = document.getElementById('predToggle');
-predToggle.addEventListener('click', ()=>{
-  const panel = document.getElementById('predictions');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-  predToggle.textContent = panel.style.display === 'none' ? 'Show Predictions' : 'Hide Predictions';
-  if(panel.style.display !== 'none') updatePredictionsPanel();
-});
-
-function updatePredictionsPanel(){
-  const predList = document.getElementById('predList');
-  predList.innerHTML = '';
-  // compute predictions
-  const arr = store.people.map(p => ({ id: p.id, name: p.name, score: computePrediction(p).score }));
-  arr.sort((a,b)=>b.score - a.score);
-  arr.forEach((it, idx)=>{
-    const label = getPredictionLabel(it.score);
-    const div = document.createElement('div');
-    div.className = 'predItem';
-    div.innerHTML = `<div style="font-weight:700">${idx+1}. ${escapeHtml(it.name)}</div><div style="display:flex;gap:8px;align-items:center"><div style="font-weight:800">${it.score}</div><div class="predLabel ${label.cls}">${label.label}</div></div>`;
-    predList.appendChild(div);
+    list.appendChild(c);
   });
 }
 
-/* ---------- Helpers ---------- */
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function timeAgo(ts){
-  if(!ts) return 'just now';
-  const s = Math.floor((Date.now() - ts)/1000);
-  if(s < 60) return s + 's';
-  if(s < 3600) return Math.floor(s/60) + 'm';
-  if(s < 86400) return Math.floor(s/3600) + 'h';
-  return Math.floor(s/86400) + 'd';
-}
-
-/* ---------- Events (delegation) ---------- */
-document.getElementById('addBtn').addEventListener('click', ()=> {
-  addOrUpdate(nameIn.value || '');
-  nameIn.value = '';
-});
-document.getElementById('decayBtn').addEventListener('click', ()=> runDecay(true));
-document.getElementById('list').addEventListener('click', (e)=>{
-  const btn = e.target.closest('button[data-action]');
-  if(!btn) return;
-  const id = btn.dataset.id;
-  const action = btn.dataset.action;
-  if(action === 'minus') changeScore(id, -10);
-  if(action === 'plus') changeScore(id, +10);
-  if(action === 'focus') toggleFocus(id);
-  if(action === 'pause') togglePause(id);
-  if(action === 'delete') deletePerson(id);
-});
-document.getElementById('list').addEventListener('change', (e)=>{
-  const fileInput = e.target;
-  if(!fileInput.dataset.upload) return;
-  const id = fileInput.dataset.upload;
-  const f = fileInput.files && fileInput.files[0];
-  if(f) handleScreenshot(id, f);
-  // reset input
-  fileInput.value = '';
-});
-
-/* ---------- Boot ---------- */
-function init(){
-  load();
-  // normalize store shape (backwards-safe)
-  store.people = (store.people || []).map(p => ({
-    id: p.id || uid(),
-    name: p.name || 'Unknown',
-    score: clamp(p.score || 0),
-    status: p.status || 'active',
-    focused: !!p.focused,
-    focusedAt: p.focusedAt || null,
-    history: p.history || [],
-    screenshots: p.screenshots || [],
-    createdAt: p.createdAt || now(),
-    lastUpdate: p.lastUpdate || now()
-  }));
-  if(!store.lastDecayAt) store.lastDecayAt = now();
-  // apply any pending decay periods
-  runDecay(false);
-  // after decay, enforce auto-focus in case someone crosses threshold
-  enforceAutoFocus();
-  render();
-}
-init();
-
-/* expose for debug */ window._rizz = { store, save, runDecay, enforceAutoFocus, computePrediction };
-
+render();
 </script>
+
 </body>
 </html>
