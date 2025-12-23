@@ -3,370 +3,386 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Rizz System — Phase A (Version 1)</title>
+<title>Rizz System — Version 1 (Phase A)</title>
+
+<!-- Tesseract.js for in-browser OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
 <style>
   :root{
-    --bg:#000;
-    --card:#0f1112;
-    --muted:#9aa3ad;
-    --accent:#00d08a;
-    --btn:#e9f1f8;
-    --danger:#ff8a8a;
-    --info:#ffb020;
+    --bg:#050505; --card:#0f1111; --muted:#9aa0a6; --accent:#00e29a; --danger:#ff7b7b;
+    --pill:#e6eefc; --btn-bg:#0b1220; --glass: rgba(255,255,255,0.04);
   }
-  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;}
-  .wrap{max-width:760px;margin:0 auto;padding:20px;}
-  h1{font-size:34px;margin:4px 0 18px;line-height:1.05}
-  .controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-  .input{flex:1;min-width:200px;padding:14px;border-radius:14px;border:0;background:#fff;color:#222}
-  .btn{padding:10px 14px;border-radius:12px;background:var(--btn);color:#0b66d1;border:0;cursor:pointer}
-  .btn-dark{background:#1b1c1d;color:#9fb8ff}
-  .card{background:var(--card);padding:18px;border-radius:16px;margin:12px 0}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .person-title{font-weight:700;font-size:20px}
-  .badge{padding:6px 10px;border-radius:10px;background:var(--accent);color:#00261a;font-weight:700}
-  .small-badge{padding:6px 10px;border-radius:10px;background:#2b2d2e;color:#cbd3d9}
-  .progress-wrap{margin:10px 0}
-  .progress{height:12px;background:#232425;border-radius:8px;overflow:hidden}
-  .progress > .bar{height:100%;background:linear-gradient(90deg,var(--accent),#20c98f);transition:width .3s}
-  .controls-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
-  .action{padding:10px 14px;border-radius:14px;background:#0f1720;color:#9fb8ff;border:0;cursor:pointer}
-  .danger{background:var(--danger);color:#400}
-  .thumb{max-width:80px;max-height:120px;border-radius:8px;display:block;margin-top:12px}
-  .note{color:var(--muted);margin-top:12px}
-  .alert{background:var(--info);color:#1a0b00;padding:12px;border-radius:12px;margin-bottom:12px}
-  .prediction{margin-top:12px;color:#cbd3d9}
-  footer{color:var(--muted);margin-top:20px}
-  @media(min-width:720px){h1{font-size:44px}}
+  html,body{height:100%;margin:0;background:var(--bg);color:#fff;font-family:Inter, system-ui, Arial;}
+  .wrap{max-width:900px;margin:18px auto;padding:0 18px;}
+  h1{font-size:34px;margin:6px 0 18px}
+  input[type=text]{width:100%;padding:16px;border-radius:14px;border:none;margin-bottom:10px;background:var(--card);color:#fff;font-size:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .btn{background:var(--pill);padding:10px 14px;border-radius:12px;border:none;color:#0b1230;font-weight:600;cursor:pointer}
+  .btn-dark{background:var(--btn-bg);color:#C9D6E6}
+  .info{background: #ffb300;padding:14px;border-radius:12px;color:#111;margin-bottom:14px;display:none}
+  .tip{color:var(--muted);margin-top:20px}
+  .card{background:var(--card);padding:18px;border-radius:16px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+  .title-line{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .progress-bar{height:12px;background:rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;margin:10px 0}
+  .progress{height:100%;background:linear-gradient(90deg,var(--accent),#2be4a4);width:0%}
+  .badge{background:#111;padding:8px 12px;border-radius:10px;color:#cbd5df;font-weight:700}
+  .focus-badge{background:#05e59b;color:#00261a;padding:8px 12px;border-radius:12px;font-weight:800}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .control-pill{background:var(--btn-bg);color:#cfe6ff;padding:10px;border-radius:12px;cursor:pointer;min-width:64px;text-align:center}
+  .danger{background:var(--danger);color:#2b0a0a}
+  img.thumb{width:72px;height:96px;object-fit:cover;border-radius:8px;margin-top:12px;border:1px solid rgba(255,255,255,0.06)}
+  .prediction{color:var(--muted);margin-top:10px}
+  footer{margin:30px 0;color:var(--muted)}
+  @media(min-width:700px){.wrap{max-width:720px}}
 </style>
 </head>
 <body>
   <div class="wrap">
     <h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-    <div class="controls">
-      <input id="nameInput" class="input" placeholder="Add name (e.g. Charity)" />
-      <button id="addBtn" class="btn">Add / Update</button>
-      <button id="decayBtn" class="btn btn-dark">Run Decay (test)</button>
+    <div id="alert" class="info"></div>
+
+    <input id="nameInput" type="text" placeholder="Add name (e.g. Charity)" />
+    <div class="row">
+      <button id="btnAdd" class="btn">Add / Update</button>
+      <button id="btnClearAll" class="btn btn-dark">Clear All</button>
+      <button id="btnRunDecay" class="btn btn-dark">Run Decay (test)</button>
     </div>
 
-    <div id="alertBox" style="display:none" class="alert"></div>
+    <div id="list"></div>
 
-    <div id="peopleContainer"></div>
-
-    <div class="note">
-      Tip: +10 / -10 clamps to 0..100. Focus limit = <span id="focusLimitLabel">2</span>. Auto-focus at ≥90%. Decay reduces score by 10 every 2 days automatically on load (localStorage).
-    </div>
-    <footer>Saved locally in your browser (localStorage). Thumbnails are stored locally (small base64).</footer>
+    <div class="tip">Tip: +10 / -10 clamps to 0..100. Focus limit = 2. Auto-focus at ≥90%. Decay reduces score by 10 every 2 days (applied on load and with the test button).</div>
+    <footer>Saved locally in your browser (localStorage). Screenshots and OCR processed in your browser.</footer>
   </div>
 
 <script>
-/* ---------- CONFIG ---------- */
-const FOCUS_LIMIT = 2
-const AUTO_FOCUS_THRESHOLD = 90
-const DECAY_INTERVAL_DAYS = 2  // apply every 2 days
-const DECAY_STEP = 10
-const STORAGE_KEY = 'rizz_v1_data'
-/* ---------- /CONFIG ---------- */
+/*
+  Rizz System v1 (Phase A)
+  - localStorage key: rizz_v1
+  - focusLimit: 2
+  - decayIntervalDays: 2 -> reduce 10 for each 2-day interval since lastDecay
+  - autoFocusThreshold: 90
+*/
 
-const nameInput = document.getElementById('nameInput')
-const addBtn = document.getElementById('addBtn')
-const decayBtn = document.getElementById('decayBtn')
-const peopleContainer = document.getElementById('peopleContainer')
-const alertBox = document.getElementById('alertBox')
-document.getElementById('focusLimitLabel').innerText = FOCUS_LIMIT
+const STORAGE_KEY = 'rizz_v1';
+const focusLimit = 2;
+const autoFocusThreshold = 90;
+const decayDays = 2; // 2 days per 10 points
+const decayAmount = 10;
 
-let state = { people: [], lastDecayAt: null }
+let data = loadData();
 
-/* Helper: save & load */
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-}
-function loadState(){
-  const raw = localStorage.getItem(STORAGE_KEY)
-  if(raw){
-    try{ state = JSON.parse(raw) } catch(e){ console.warn('bad state', e) }
-  } else {
-    state = { people: [], lastDecayAt: null }
-    saveState()
-  }
+const alertEl = document.getElementById('alert');
+const listEl = document.getElementById('list');
+const nameInput = document.getElementById('nameInput');
+document.getElementById('btnAdd').addEventListener('click', addOrUpdatePerson);
+document.getElementById('btnClearAll').addEventListener('click', clearAll);
+document.getElementById('btnRunDecay').addEventListener('click', ()=>{ runDecay(true); });
+
+/* --------- Data model helpers ---------- */
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-/* Utilities */
-function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6) }
-function clamp(n){ return Math.max(0, Math.min(100, Math.round(n))) }
-function nowISO(){ return new Date().toISOString() }
-
-/* Create / Update Person */
-function addOrUpdatePerson(name){
-  name = (''+name).trim()
-  if(!name) { showAlert('Please enter a name'); return }
-  // check exists (case-insensitive)
-  const exists = state.people.find(p => p.name.toLowerCase() === name.toLowerCase())
-  if(exists){
-    // update timestamp only
-    exists.updatedAt = nowISO()
-    showAlert(`Updated ${exists.name}`, 1500)
-  } else {
-    const p = { id: uid(), name, score: 0, focus:false, paused:false, createdAt: nowISO(), updatedAt: nowISO(), thumb:null, focusSetAt:null }
-    state.people.push(p)
-    showAlert(`Added ${p.name}`, 1200)
-  }
-  autoFocusCheck()
-  saveState(); render()
-}
-
-/* Delete */
-function deletePerson(id){
-  state.people = state.people.filter(p=>p.id!==id)
-  saveState(); render()
-}
-
-/* +/- */
-function changeScore(id, delta){
-  const p = state.people.find(x=>x.id===id); if(!p) return
-  p.score = clamp(p.score + delta)
-  p.updatedAt = nowISO()
-  // auto-focus check if new score crosses threshold
-  if(p.score >= AUTO_FOCUS_THRESHOLD) setFocus(id, true, true) // auto triggered
-  saveState(); render()
-}
-
-/* Focus logic */
-function setFocus(id, on, auto=false){
-  const p = state.people.find(x=>x.id===id); if(!p) return
-  if(on){
-    // enforce limit
-    const currentFocus = state.people.filter(x=>x.focus)
-    if(currentFocus.length >= FOCUS_LIMIT){
-      // remove oldest focus (by focusSetAt)
-      currentFocus.sort((a,b)=> (a.focusSetAt||0) - (b.focusSetAt||0))
-      const oldest = currentFocus[0]
-      if(oldest && oldest.id !== id){
-        oldest.focus = false
-        oldest.focusSetAt = null
-      }
-    }
-    p.focus = true
-    p.focusSetAt = Date.now()
-  } else {
-    p.focus = false
-    p.focusSetAt = null
-  }
-  if(!auto) p.updatedAt = nowISO()
-  saveState(); render()
-}
-
-/* Pause toggle */
-function togglePause(id){
-  const p=state.people.find(x=>x.id===id); if(!p) return
-  p.paused = !p.paused; p.updatedAt = nowISO(); saveState(); render()
-}
-
-/* Attach thumbnail (file input) */
-function attachThumbnail(id, file){
-  const p = state.people.find(x=>x.id===id); if(!p) return
-  if(!file) return
-  const reader = new FileReader()
-  reader.onload = (e)=>{
-    // store small base64 (thumbnail)
-    p.thumb = e.target.result
-    p.updatedAt = nowISO()
-    saveState(); render()
-  }
-  reader.readAsDataURL(file)
-}
-
-/* Prediction calc */
-function computePrediction(score){
-  // Simple scaling rule: prediction = score * 1.333 -> maps 90 => 120, etc.
-  const pred = Math.round(score * 1.333)
-  let label = 'Unlikely'
-  if(pred >= 150) label = 'Most Likely'
-  else if(pred >= 100) label = 'Possible'
-  return { pred, label }
-}
-
-/* Decay: reduce score for every DECAY_INTERVAL_DAYS passed since lastDecayAt */
-function applyDecayIntervals(intervals){
-  let changed = false
-  state.people.forEach(p=>{
-    if(p.paused) return
-    const newScore = clamp(p.score - DECAY_STEP * intervals)
-    if(newScore !== p.score){
-      p.score = newScore
-      p.updatedAt = nowISO()
-      changed = true
-      // if score falls below threshold, unfocus automatically
-      if(p.score < AUTO_FOCUS_THRESHOLD && p.focus) {
-        p.focus = false; p.focusSetAt = null
-      }
-    }
-  })
-  if(changed) saveState()
-  return changed
-}
-
-function runDecayNow(){
-  const now = Date.now()
-  if(!state.lastDecayAt) state.lastDecayAt = new Date().toISOString()
-  const last = new Date(state.lastDecayAt).getTime()
-  const msPerInterval = DECAY_INTERVAL_DAYS * 24 * 3600 * 1000
-  const intervals = Math.floor((now - last) / msPerInterval)
-  if(intervals <= 0){
-    // still allow manual forced single-step decay
-    const forced = confirm('No full intervals passed. Run a single decay step now?')
-    if(!forced) return
-    applyDecayIntervals(1)
-    state.lastDecayAt = new Date().toISOString()
-    saveState(); render(); showAlert('Decay forced (1 step)', 1200); return
-  }
-  const changed = applyDecayIntervals(intervals)
-  state.lastDecayAt = new Date(state.lastDecayAt) // keep original date
-  state.lastDecayAt = new Date(last + intervals * msPerInterval).toISOString()
-  saveState(); render()
-  showAlert(`Decay ran (${intervals} step(s))`, 1200)
-}
-
-/* Auto-focus check across all persons (used after load or changes) */
-function autoFocusCheck(){
-  // for any person with score >= threshold, ensure focus set. 
-  // apply oldest-first: sort by updatedAt ascending - this ensures determinism.
-  const candidates = state.people.filter(p=>p.score >= AUTO_FOCUS_THRESHOLD && !p.paused)
-  // sort by updatedAt (older updated first)
-  candidates.sort((a,b)=> new Date(a.updatedAt) - new Date(b.updatedAt))
-  candidates.forEach(c=>{
-    if(!c.focus){
-      setFocus(c.id, true, true)
-    }
-  })
-  // enforce focus limit once more
-  const focused = state.people.filter(p=>p.focus).sort((a,b)=> (a.focusSetAt||0) - (b.focusSetAt||0))
-  if(focused.length > FOCUS_LIMIT){
-    const toRemove = focused.length - FOCUS_LIMIT
-    for(let i=0;i<toRemove;i++){
-      focused[i].focus = false
-      focused[i].focusSetAt = null
-    }
-    saveState()
-  }
-}
-
-/* UI render */
-function render(){
-  peopleContainer.innerHTML = ''
-  // order: focused first then by updatedAt desc
-  const sorted = [...state.people].sort((a,b)=>{
-    if(a.focus && !b.focus) return -1
-    if(!a.focus && b.focus) return 1
-    return new Date(b.updatedAt) - new Date(a.updatedAt)
-  })
-  if(sorted.length === 0){
-    peopleContainer.innerHTML = `<div class="note">No people yet — add someone above.</div>`
-    return
-  }
-  sorted.forEach(p => {
-    const card = document.createElement('div'); card.className='card'
-    const titleRow = document.createElement('div'); titleRow.className='row'
-    const left = document.createElement('div'); left.innerHTML = `<div class="person-title">${escapeHtml(p.name)} — ${p.score}%</div>`
-    const right = document.createElement('div')
-    if(p.focus) right.innerHTML = `<span class="badge">FOCUS</span>`
-    else right.innerHTML = `<span class="small-badge">${p.paused ? 'PAUSED' : 'ACTIVE'}</span>`
-    titleRow.appendChild(left); titleRow.appendChild(right)
-    card.appendChild(titleRow)
-
-    // progress
-    const progWrap = document.createElement('div'); progWrap.className='progress-wrap'
-    const prog = document.createElement('div'); prog.className='progress'
-    const bar = document.createElement('div'); bar.className='bar'
-    bar.style.width = p.score + '%'
-    prog.appendChild(bar); progWrap.appendChild(prog); card.appendChild(progWrap)
-
-    // controls
-    const controls = document.createElement('div'); controls.className='controls-row'
-    const btnMinus = elButton('-10', ()=>changeScore(p.id, -10))
-    const btnPlus = elButton('+10', ()=>changeScore(p.id, +10))
-    const btnFocus = elButton(p.focus ? 'Unfocus' : 'Focus', ()=>setFocus(p.id, !p.focus))
-    const btnPause = elButton(p.paused ? 'Active' : 'Pause', ()=>togglePause(p.id))
-    const btnDelete = elButton('Delete', ()=>{ if(confirm('Delete '+p.name+'?')) deletePerson(p.id) }, 'danger')
-    controls.append(btnMinus, btnPlus, btnFocus, btnPause, btnDelete)
-
-    // attach (hidden file input)
-    const attachInput = document.createElement('input'); attachInput.type='file'; attachInput.accept='image/*'; attachInput.style.display='none'
-    attachInput.onchange = (ev)=>{
-      const f = ev.target.files && ev.target.files[0]; if(f) attachThumbnail(p.id, f)
-    }
-    const attachBtn = elButton('📷 Attach', ()=>attachInput.click())
-    controls.appendChild(attachBtn)
-    controls.appendChild(attachInput)
-
-    card.appendChild(controls)
-
-    // prediction
-    const pred = computePrediction(p.score)
-    const predDiv = document.createElement('div'); predDiv.className='prediction'
-    predDiv.innerHTML = `Prediction: <strong>${pred.pred}</strong> — ${pred.label}`
-    card.appendChild(predDiv)
-
-    // thumbnail
-    if(p.thumb){
-      const img = document.createElement('img'); img.className='thumb'; img.src = p.thumb; card.appendChild(img)
-    }
-
-    peopleContainer.appendChild(card)
-  })
-}
-
-/* small helper to create button elements */
-function elButton(text, onClick, type){
-  const b = document.createElement('button'); b.className='action'; b.innerText = text
-  if(type === 'danger'){ b.classList.add('danger') }
-  b.onclick = onClick; return b
-}
-
-/* small helper to show alert */
-let alertTimer = null
-function showAlert(msg, ms=2000){
-  alertBox.style.display='block'; alertBox.innerText = msg
-  if(alertTimer) clearTimeout(alertTimer)
-  alertTimer = setTimeout(()=>{ alertBox.style.display='none' }, ms)
-}
-
-/* escape html */
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])) }
-
-/* --- events --- */
-addBtn.onclick = ()=>{ addOrUpdatePerson(nameInput.value); nameInput.value=''; }
-decayBtn.onclick = ()=>{ runDecayNow() }
-
-/* onload: load state, apply any pending decay intervals, auto-focus and render */
-loadState()
-/* apply decay based on intervals passed since lastDecayAt */
-(function applyPendingDecayOnLoad(){
+function loadData(){
   try{
-    if(!state.lastDecayAt){
-      state.lastDecayAt = new Date().toISOString()
-      saveState()
-    }
-    const now = Date.now()
-    const last = new Date(state.lastDecayAt).getTime()
-    const msPerInterval = DECAY_INTERVAL_DAYS * 24 * 3600 * 1000
-    const intervals = Math.floor((now - last) / msPerInterval)
-    if(intervals > 0){
-      applyDecayIntervals(intervals)
-      // advance lastDecayAt forward by intervals
-      state.lastDecayAt = new Date(last + intervals * msPerInterval).toISOString()
-      saveState()
-      showAlert(`Decay auto-run: ${intervals} step(s)`, 1200)
-    }
-  }catch(e){ console.warn(e) }
-  // run auto-focus check (handles existing >=90 cases)
-  autoFocusCheck()
-  render()
-})()
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {people:[], lastDecay: Date.now()};
+    if(!parsed.lastDecay) parsed.lastDecay = Date.now();
+    return parsed;
+  }catch(e){
+    return {people:[], lastDecay: Date.now()};
+  }
+}
 
-/* expose for console debugging */
-window.__RIZZ = { state, saveState, loadState, runDecayNow }
+function now(){return Date.now();}
+
+function clamp(v){ return Math.max(0, Math.min(100, Math.round(v))); }
+
+function findPerson(name){
+  return data.people.find(p => p.name.toLowerCase() === name.toLowerCase());
+}
+
+/* ---------- Decay logic ---------- */
+function runDecay(force=false){
+  // Calculate how many decay periods passed since lastDecay
+  const last = data.lastDecay || now();
+  const diffDays = (now() - last) / (1000*60*60*24);
+  const periods = force ? 1 : Math.floor(diffDays / decayDays);
+  if(periods <= 0 && !force){
+    showAlert('No decay needed yet', 2000);
+    return;
+  }
+  if(periods > 0 || force){
+    data.people.forEach(p => {
+      if(p.score > 0){
+        p.score = clamp(p.score - decayAmount * periods);
+        p.updated = now();
+        // remove focus if score drops below threshold
+        if(p.score < autoFocusThreshold && p.isFocus){
+          p.isFocus=false;
+        }
+      }
+    });
+    data.lastDecay = now();
+    saveData();
+    render();
+    showAlert('Decay applied' + (force ? ' (test)' : ''), 2000);
+  }
+}
+
+/* ---------- Focus / auto-focus ---------- */
+function enforceFocusLimit(){
+  const focused = data.people.filter(p=>p.isFocus);
+  if(focused.length <= focusLimit) return;
+  // remove the oldest focused (by updated time)
+  focused.sort((a,b)=>a.updated - b.updated);
+  while(focused.length > focusLimit){
+    const rem = focused.shift();
+    rem.isFocus = false;
+    showAlert('Focus limit reached — oldest focus removed', 2500);
+  }
+  saveData();
+  render();
+}
+
+function maybeAutoFocus(person){
+  if(person.score >= autoFocusThreshold){
+    if(!person.isFocus){
+      person.isFocus = true;
+      person.updated = now();
+      // enforce limit
+      enforceFocusLimit();
+      saveData();
+      render();
+      showAlert(`${person.name} auto-focused (≥ ${autoFocusThreshold}%)`, 2000);
+    }
+  }
+}
+
+/* ---------- UI rendering ---------- */
+function render(){
+  listEl.innerHTML = '';
+  if(!data.people || data.people.length===0){
+    listEl.innerHTML = '<div style="color:var(--muted);padding:24px">No people yet — add someone above.</div>';
+    return;
+  }
+  data.people.forEach(p => listEl.appendChild(renderPersonCard(p)));
+}
+
+function renderPersonCard(p){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="title-line">
+      <div style="font-size:20px;font-weight:700">${escapeHtml(p.name)} — ${p.score}%</div>
+      <div>${p.isFocus ? '<span class="focus-badge">FOCUS</span>' : '<span class="badge">ACTIVE</span>'}</div>
+    </div>
+    <div class="progress-bar"><div class="progress" style="width:${p.score}%"></div></div>
+    <div class="controls" data-name="${escapeHtml(p.name)}">
+      <div class="control-pill control-dec" data-act="-10">-10</div>
+      <div class="control-pill control-inc" data-act="+10">+10</div>
+      <div class="control-pill control-unfocus" data-act="unfocus">Unfocus</div>
+      <div class="control-pill control-pause" data-act="pause">${p.status === 'paused' ? 'Active' : 'Pause'}</div>
+      <div class="control-pill control-delete danger" data-act="delete">Delete</div>
+      <label class="control-pill" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:var(--btn-bg)">
+        📷 Attach <input type="file" accept="image/*" style="display:none" class="attach-input" />
+      </label>
+    </div>
+    <div class="prediction">Prediction: <span class="predVal">${p.prediction || '—'}</span></div>
+    <div class="thumbs"></div>
+  `;
+  // attach event listeners
+  const controls = card.querySelector('.controls');
+  controls.addEventListener('click', controlHandler);
+  // file input handling
+  const fileInput = card.querySelector('.attach-input');
+  fileInput.addEventListener('change', (ev)=>handleAttach(ev, p));
+  // thumbs
+  const thumbs = card.querySelector('.thumbs');
+  thumbs.innerHTML = '';
+  if(p.images && p.images.length){
+    p.images.forEach((dURL, idx)=>{
+      const img = document.createElement('img');
+      img.src = dURL;
+      img.className = 'thumb';
+      img.title = 'Tap to OCR';
+      img.style.cursor='pointer';
+      img.onclick = ()=>runOCRImage(dURL, p);
+      thumbs.appendChild(img);
+    });
+  }
+  return card;
+}
+
+/* ---------- Event handlers ---------- */
+function controlHandler(e){
+  const pill = e.target.closest('.control-pill, label.control-pill');
+  if(!pill) return;
+  const parent = pill.closest('.controls');
+  const name = parent.dataset.name;
+  const person = findPerson(name);
+  const act = pill.dataset.act;
+  if(!person) return;
+  if(act === '-10' || act === '+10'){
+    const delta = act === '-10' ? -10 : 10;
+    person.score = clamp(person.score + delta);
+    person.updated = now();
+    saveData();
+    maybeAutoFocus(person);
+    render();
+    return;
+  }
+  if(act === 'unfocus'){
+    person.isFocus = false;
+    person.updated = now();
+    saveData();
+    render();
+    return;
+  }
+  if(act === 'pause'){
+    person.status = (person.status === 'paused') ? 'active' : 'paused';
+    person.updated = now();
+    saveData();
+    render();
+    return;
+  }
+  if(act === 'delete'){
+    if(confirm(`Delete ${person.name}?`)){
+      data.people = data.people.filter(p => p.name.toLowerCase() !== person.name.toLowerCase());
+      saveData();
+      render();
+    }
+    return;
+  }
+}
+
+/* ---------- Add / Update ---------- */
+function addOrUpdatePerson(){
+  const name = (nameInput.value || '').trim();
+  if(!name){ showAlert('Please enter a name', 2000); return; }
+  let person = findPerson(name);
+  if(!person){
+    person = {
+      id: Date.now() + '-' + Math.random().toString(36).slice(2,6),
+      name,
+      score: 0,
+      status: 'active',
+      isFocus: false,
+      images: [],
+      prediction: '',
+      updated: now()
+    };
+    data.people.push(person);
+    showAlert(`Added ${name}`, 1500);
+  } else {
+    person.updated = now();
+    showAlert(`Updated ${name}`, 1200);
+  }
+  saveData();
+  nameInput.value = '';
+  render();
+}
+
+/* ---------- Attach & OCR ---------- */
+function handleAttach(ev, person){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=> {
+    const dataURL = reader.result;
+    person.images = person.images || [];
+    person.images.unshift(dataURL); // newest first
+    person.updated = now();
+    // show thumbnail immediately
+    saveData();
+    render();
+    // also try OCR automatically
+    runOCRImage(dataURL, person);
+  };
+  reader.readAsDataURL(file);
+  ev.target.value = '';
+}
+
+async function runOCRImage(dataURL, person){
+  // run Tesseract.js on image and extract text -> generate a simple reply suggestion
+  showAlert('Running OCR...', 2000);
+  try{
+    const worker = Tesseract.createWorker();
+    await worker.load();
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    const { data: { text } } = await worker.recognize(dataURL);
+    await worker.terminate();
+    const clean = (text || '').trim();
+    if(clean){
+      person.lastOCR = clean;
+      person.prediction = generatePredictionFromText(clean, person);
+      person.updated = now();
+      saveData();
+      render();
+      showAlert('OCR done', 1500);
+    } else {
+      showAlert('OCR found no text', 2000);
+    }
+  }catch(err){
+    console.error(err);
+    showAlert('OCR failed (check image quality)', 3000);
+  }
+}
+
+function generatePredictionFromText(text, person){
+  // Very simple heuristics to produce a numeric "prediction" and label
+  // This is NOT ML — it's rules: more "love" words -> higher score
+  const lower = text.toLowerCase();
+  let scoreBoost = 0;
+  const loveWords = ['love','miss','luv','babe','baby','ily','i love'];
+  const positive = ['yes','yep','sure','ok','done','done now','😊','😄','great'];
+  loveWords.forEach(w=>{ if(lower.includes(w)) scoreBoost += 30; });
+  positive.forEach(w=>{ if(lower.includes(w)) scoreBoost += 8; });
+  if(lower.includes('sorry')) scoreBoost -= 15;
+  if(lower.includes('busy')) scoreBoost -= 8;
+  // base is current score
+  const base = person.score || 0;
+  let pred = clamp(base + scoreBoost);
+  // label
+  let label = 'Possible';
+  if(pred >= 120) label = 'Most Likely';
+  else if(pred >= 90) label = 'Likely';
+  else if(pred >= 60) label = 'Possible';
+  else label = 'Unlikely';
+  // store label and numeric (we can allow >100 for "prediction number" display)
+  person.prediction = `${pred} — ${label}`;
+  return person.prediction;
+}
+
+/* ---------- Helpers ---------- */
+function showAlert(msg, ms = 2500){
+  alertEl.style.display = 'block';
+  alertEl.textContent = msg;
+  setTimeout(()=>{ alertEl.style.display = 'none'; }, ms);
+}
+
+function clearAll(){
+  if(!confirm('Clear all saved people?')) return;
+  data = {people:[], lastDecay: now()};
+  saveData();
+  render();
+  showAlert('Cleared',1200);
+}
+
+function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[s])); }
+
+/* ---------- startup ---------- */
+(function init(){
+  // apply decay on load (auto)
+  try{ runDecay(false); }catch(e){ console.warn('decay error', e); }
+  // ensure no more than focusLimit focused
+  enforceFocusLimit();
+  render();
+})();
+
 </script>
 </body>
 </html>
