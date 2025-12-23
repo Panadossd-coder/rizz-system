@@ -1,28 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Rizz System — Version 1 (Phase A)</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
-    <h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-    <div class="controls">
-      <input id="nameInput" placeholder="Add name (e.g. Charity)" />
-      <button id="addBtn">Add / Update</button>
-      <button id="decayBtn" class="dark">Run Decay (test)</button>
-    </div>
+<div class="wrap">
+  <h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-    <div id="people"></div>
-
-    <p class="note">
-      Focus limit = 2 · Auto-focus ≥90% · Decay −10 (manual test)
-    </p>
+  <div class="controls">
+    <input id="nameInput" class="input" placeholder="Add name (e.g. Charity)">
+    <button id="addBtn" class="btn">Add / Update</button>
+    <button id="decayBtn" class="btn btn-dark">Run Decay (test)</button>
   </div>
 
-  <script src="app.js"></script>
+  <div id="alertBox" class="alert hidden"></div>
+
+  <div id="peopleContainer"></div>
+
+  <p class="note">
+    Focus limit = 2 · Auto-focus at ≥90% · Decay −10 every 2 days
+  </p>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
