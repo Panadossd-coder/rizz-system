@@ -1,109 +1,220 @@
-/* --- Robustness helpers: debounce / disable UI / export-import --- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rizz System Dashboard</title>
 
-function debounce(fn, wait=300) {
-  let t;
-  return function(...args){
-    clearTimeout(t);
-    t = setTimeout(()=> fn.apply(this,args), wait);
-  };
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 20px;
+  }
+
+  h1 { font-size: 32px; margin-bottom: 10px; }
+
+  input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+
+  button {
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    background: #eee;
+    margin: 4px;
+    cursor: pointer;
+  }
+
+  .primary { background: #ddd; }
+  .warn { background: #ffb000; color: #000; margin: 12px 0; padding: 14px; border-radius: 14px; }
+  .card { margin-top: 22px; }
+  .name { font-size: 20px; font-weight: 600; }
+
+  .badge {
+    margin-left: 10px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    background: #333;
+  }
+
+  .focus { background: #1aff8c; color: #000; }
+
+  .bar {
+    width: 100%;
+    height: 10px;
+    background: #222;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1aff8c, #00cc66);
+  }
+
+  .row { margin-bottom: 6px; }
+</style>
+</head>
+
+<body>
+
+<h1>🔥 Rizz System Dashboard</h1>
+
+<div id="warning"></div>
+
+<input id="nameInput" placeholder="Enter name (e.g. Charity)" />
+<button class="primary" onclick="addOrUpdate()">Add / Update</button>
+<button onclick="clearAll()">Clear All</button>
+
+<div id="list"></div>
+
+<p style="opacity:.6;margin-top:30px">
+  Tip: +10 / -10 clamps 0–100 · Focus limit = 2 · Decay every 48 hours
+</p>
+
+<script>
+/* ------------------ CONFIG ------------------ */
+const MAX_FOCUS = 2;
+const DECAY_DAYS = 2;
+const DECAY_AMOUNT = 10;
+
+/* ------------------ STATE ------------------ */
+let data = JSON.parse(localStorage.getItem("rizz-data") || "[]");
+
+/* ------------------ UTIL ------------------ */
+const save = () => localStorage.setItem("rizz-data", JSON.stringify(data));
+const now = () => Date.now();
+const clamp = v => Math.max(0, Math.min(100, v));
+
+/* ------------------ WARN ------------------ */
+function warn(msg) {
+  document.getElementById("warning").innerHTML =
+    `<div class="warn">⚠️ ${msg}</div>`;
+  setTimeout(() => document.getElementById("warning").innerHTML = "", 3000);
 }
 
-// disable/enable all interactive buttons to avoid rapid double-click issues
-function setUIEnabled(enabled) {
-  document.querySelectorAll('button, input').forEach(el=>{
-    // keep name input enabled always (so user can type), but disable buttons if requested
-    if (el.tagName.toLowerCase() === 'button') el.disabled = !enabled;
+/* ------------------ ADD ------------------ */
+function addOrUpdate() {
+  const input = document.getElementById("nameInput");
+  const name = input.value.trim();
+
+  if (!name) return warn("Please enter a name");
+
+  let person = data.find(p => p.name.toLowerCase() === name.toLowerCase());
+
+  if (!person) {
+    data.push({
+      name,
+      score: 0,
+      status: "ACTIVE",
+      focusedAt: null,
+      lastUpdate: now()
+    });
+  }
+
+  input.value = "";
+  save();
+  render();
+}
+
+/* ------------------ ACTIONS ------------------ */
+function changeScore(name, delta) {
+  const p = data.find(x => x.name === name);
+  if (!p) return;
+  p.score = clamp(p.score + delta);
+  p.lastUpdate = now();
+  save();
+  render();
+}
+
+function setStatus(name, status) {
+  const p = data.find(x => x.name === name);
+  if (!p) return;
+
+  if (status === "FOCUS") {
+    const focused = data.filter(x => x.status === "FOCUS");
+    if (focused.length >= MAX_FOCUS) {
+      focused.sort((a,b)=>a.focusedAt-b.focusedAt)[0].status="ACTIVE";
+      warn("Focus limit reached — oldest focus removed");
+    }
+    p.focusedAt = now();
+  }
+
+  p.status = status;
+  save();
+  render();
+}
+
+function remove(name) {
+  data = data.filter(p => p.name !== name);
+  save();
+  render();
+}
+
+function clearAll() {
+  if (!confirm("Clear everything?")) return;
+  data = [];
+  save();
+  render();
+}
+
+/* ------------------ DECAY ------------------ */
+function applyDecay() {
+  const cutoff = now() - DECAY_DAYS * 86400000;
+  data.forEach(p => {
+    if (p.lastUpdate < cutoff && p.score > 0) {
+      p.score = clamp(p.score - DECAY_AMOUNT);
+      p.lastUpdate = now();
+    }
+  });
+  save();
+}
+
+/* ------------------ RENDER ------------------ */
+function render() {
+  applyDecay();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="row name">
+        ${p.name} — ${p.score}%
+        <span class="badge ${p.status==="FOCUS"?"focus":""}">${p.status}</span>
+      </div>
+
+      <div class="bar">
+        <div class="fill" style="width:${p.score}%"></div>
+      </div>
+
+      <button onclick="changeScore('${p.name}',-10)">-10</button>
+      <button onclick="changeScore('${p.name}',10)">+10</button>
+      <button onclick="setStatus('${p.name}','FOCUS')">Focus</button>
+      <button onclick="setStatus('${p.name}','ACTIVE')">Active</button>
+      <button onclick="setStatus('${p.name}','PAUSE')">Pause</button>
+      <button onclick="remove('${p.name}')">Delete</button>
+    `;
+    list.appendChild(card);
   });
 }
 
-// wrap original addOrUpdate with protection & debounce
-const originalAddOrUpdate = window.addOrUpdate;
-window.addOrUpdate = debounce(function(){
-  setUIEnabled(false);
-  try {
-    originalAddOrUpdate();
-  } finally {
-    // small timeout to avoid instant re-enable while render still settling
-    setTimeout(()=>setUIEnabled(true), 120);
-  }
-}, 250);
+render();
+</script>
 
-// safer changeScore wrapper to protect mass clicks
-const originalChangeScore = window.changeScore;
-window.changeScore = function(name, delta){
-  setUIEnabled(false);
-  try {
-    originalChangeScore(name, delta);
-  } finally {
-    setTimeout(()=>setUIEnabled(true), 120);
-  }
-};
-
-// safer remove / clear with confirmation
-const originalRemove = window.remove;
-window.remove = function(name){
-  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-  setUIEnabled(false);
-  try { originalRemove(name); } finally { setTimeout(()=>setUIEnabled(true),120); }
-};
-
-const originalClearAll = window.clearAll;
-window.clearAll = function(){
-  if (!confirm("Clear all entries? This will erase local data.")) return;
-  setUIEnabled(false);
-  try { originalClearAll(); } finally { setTimeout(()=>setUIEnabled(true),120); }
-};
-
-// EXPORT / IMPORT functions (adds two small controls to the top)
-function exportData() {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rizz-data.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function importDataFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const parsed = JSON.parse(reader.result);
-      if (!Array.isArray(parsed)) throw new Error("Invalid file");
-      if (!confirm("Replace current data with imported data?")) return;
-      data = parsed.map(item => ({
-        name: String(item.name||'').trim(),
-        score: clamp(Number(item.score)||0),
-        status: item.status || "ACTIVE",
-        focusedAt: item.focusedAt || null,
-        lastUpdate: item.lastUpdate || now()
-      })).filter(p=>p.name);
-      save();
-      render();
-      alert("Import complete.");
-    } catch(e) {
-      alert("Import failed: " + e.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-/* --- add small export/import UI near top (if not present) --- */
-(function addExportImportUI(){
-  const ctrl = document.createElement('div');
-  ctrl.style.margin = '10px 0';
-  ctrl.innerHTML = `
-    <button id="exportBtn">Export JSON</button>
-    <input id="importFile" type="file" accept=".json" style="display:none" />
-    <button id="importBtn">Import JSON</button>
-  `;
-  const root = document.body;
-  root.insertBefore(ctrl, document.getElementById('list'));
-  document.getElementById('exportBtn').onclick = exportData;
-  document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
-  document.getElementById('importFile').onchange = e => importDataFile(e.target.files[0]);
-})();
+</body>
+</html>
