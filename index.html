@@ -1,175 +1,169 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>🔥 Rizz System — Version 1 (Phase A)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rizz System — Version 1 (Phase A)</title>
+<!-- Tidy, simple styles similar to your screenshots -->
 <style>
-body {
-  background:#000;
-  color:#fff;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  padding:20px;
-}
-h1 { font-size:26px; }
-input, button {
-  padding:12px;
-  border-radius:14px;
-  border:none;
-  font-size:15px;
-}
-button { background:#eaeaea; }
-.card {
-  background:#0d0d0d;
-  border-radius:18px;
-  padding:16px;
-  margin-top:18px;
-}
-.bar {
-  height:10px;
-  background:#222;
-  border-radius:10px;
-  overflow:hidden;
-  margin:8px 0;
-}
-.fill {
-  height:100%;
-  background:linear-gradient(90deg,#00ff99,#00cc88);
-}
-.focus {
-  background:#00ff99;
-  color:#000;
-  padding:4px 10px;
-  border-radius:12px;
-  font-size:12px;
-}
-.thumb {
-  width:60px;
-  height:60px;
-  object-fit:cover;
-  border-radius:10px;
-  margin-top:10px;
-}
-.row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-.small { font-size:13px; opacity:.7; margin-top:6px; }
+  :root{
+    --bg:#000;
+    --card:#0f0f0f;
+    --pill:#0b0b0b;
+    --accent:#00dda0;
+    --muted:#9aa0a6;
+    --btn:#e9f2ff;
+    --danger:#ffb3b3;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:#fff;line-height:1.2;padding:22px;}
+  h1{font-size:36px;margin:0 0 18px 0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input[type=text]{flex:1;padding:16px;border-radius:14px;border:0;background:#fff;color:#111;font-size:16px}
+  button{background:var(--btn);border-radius:14px;padding:10px 14px;border:0;font-weight:600;color:#0366d6;cursor:pointer}
+  .controls{margin:12px 0 18px 0;display:flex;gap:8px;flex-wrap:wrap}
+  .card{background:var(--card);border-radius:16px;padding:16px;margin:14px 0;box-shadow:0 6px 22px rgba(0,0,0,.5)}
+  .person-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .name{font-size:20px;font-weight:700}
+  .status{background:#222;border-radius:12px;padding:6px 10px;font-size:12px}
+  .progress-wrap{height:14px;background:#222;border-radius:10px;overflow:hidden;margin:10px 0}
+  .progress{height:100%;background:linear-gradient(90deg,var(--accent),#05dca4);width:0}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .small-btn{padding:10px 14px;border-radius:14px;background:#fff;color:#0366d6;border:0;cursor:pointer}
+  .small-btn.danger{background:var(--danger)}
+  .pill{display:inline-block;padding:6px 10px;border-radius:14px;background:var(--accent);color:#00381f;font-weight:700;margin-left:12px}
+  .banner{background:#ffb238;color:#111;padding:12px;border-radius:12px;margin-bottom:12px}
+  .thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;border:2px solid #222;margin-top:8px}
+  .muted{color:var(--muted);font-size:14px;margin-top:8px}
+  .footer-note{color:var(--muted);margin-top:18px}
+  .tiny{font-size:12px;color:var(--muted)}
+  .ocr-box{background:#000;padding:8px;border-radius:8px;margin-top:8px;border:1px solid #222}
+  .suggest{background:#081218;color:#9ef0d1;border-radius:10px;padding:8px;margin-top:8px}
+  @media(min-width:880px){body{max-width:780px;margin:0 auto}}
 </style>
 </head>
-
 <body>
 
-<h1>🔥 Rizz System — Version 1<br>(Phase A: Predictions)</h1>
+<h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-<input id="nameInput" placeholder="Add name (e.g. Charity)">
-<button onclick="addPerson()">Add / Update</button>
-<button onclick="runDecay()">Run Decay (test)</button>
+<!-- notifications -->
+<div id="banner" style="display:none" class="banner"></div>
 
-<div id="list"></div>
+<div class="row">
+  <input id="nameInput" type="text" placeholder="Add name (e.g. Charity)" />
+  <button id="addBtn">Add / Update</button>
+</div>
 
-<input type="file" id="filePicker" accept="image/*" hidden>
+<div class="controls">
+  <button id="decayBtn">Run Decay (test)</button>
+  <div class="tiny">Tip: +10 / -10 clamps to 0..100. Focus limit = 2. Auto-focus at ≥90%. Decay reduces score by 10 every 2 days (stored locally).</div>
+</div>
 
+<div id="peopleList"></div>
+
+<div class="footer-note">Saved locally in your browser (localStorage). Screenshots and OCR are processed in-browser.</div>
+
+<!-- Tesseract (optional OCR). We'll lazy-load only when user uses OCR to reduce initial load -->
 <script>
-let data = JSON.parse(localStorage.getItem("rizz_v1")) || [];
-let attachTarget = null;
+/*
+  Rizz System — Version 1 (Phase A)
+  - Person structure stored in localStorage under 'rizz_persons'
+    { id, name, score, status:'active'|'paused', isFocus:boolean, focusAt:number|null, screenshots: [dataURL], updatedAt:number }
+  - Global limits:
+    - autoFocusThreshold = 90
+    - maxFocus = 2
+    - decayAmount = 10 per decayPeriodDays (2)
+*/
+(() => {
+  // Config
+  const STORAGE_KEY = 'rizz_persons_v1';
+  const LAST_DECAY_KEY = 'rizz_last_decay_v1';
+  const autoFocusThreshold = 90;
+  const maxFocus = 2;
+  const decayAmount = 10;
+  const decayPeriodDays = 2; // decay every 2 days
+  const maxScreensPerPerson = 6;
 
-function save() {
-  localStorage.setItem("rizz_v1", JSON.stringify(data));
-}
+  // state
+  let persons = loadPersons();
+  let bannerTimeout = null;
 
-function addPerson() {
-  const name = nameInput.value.trim();
-  if (!name) return;
-  let p = data.find(x=>x.name===name);
-  if (!p) {
-    p = { name, score:0, focus:false, updated:Date.now(), shots:[] };
-    data.push(p);
-  }
-  p.updated = Date.now();
-  autoFocus();
-  save();
-  render();
-  nameInput.value="";
-}
+  // DOM
+  const nameInput = document.getElementById('nameInput');
+  const addBtn = document.getElementById('addBtn');
+  const peopleList = document.getElementById('peopleList');
+  const decayBtn = document.getElementById('decayBtn');
+  const banner = document.getElementById('banner');
 
-function autoFocus() {
-  const focused = data.filter(p=>p.focus);
-  data.forEach(p=>{
-    if (p.score >= 90 && !p.focus && focused.length < 2) {
-      p.focus = true;
-    }
-  });
-  while (data.filter(p=>p.focus).length > 2) {
-    data.filter(p=>p.focus)[0].focus = false;
-  }
-}
-
-function changeScore(p, d) {
-  p.score = Math.max(0, Math.min(100, p.score + d));
-  p.updated = Date.now();
-  autoFocus();
-  save(); render();
-}
-
-function toggleFocus(p) {
-  if (!p.focus && data.filter(x=>x.focus).length >= 2) {
-    data.filter(x=>x.focus)[0].focus = false;
-  }
-  p.focus = !p.focus;
-  save(); render();
-}
-
-function runDecay() {
-  data.forEach(p=>{
-    const days = (Date.now() - p.updated) / (1000*60*60*24);
-    if (days >= 2) p.score = Math.max(0, p.score - 10);
-  });
-  save(); render();
-}
-
-function attach(p) {
-  attachTarget = p;
-  filePicker.click();
-}
-
-filePicker.onchange = e => {
-  const file = e.target.files[0];
-  if (!file || !attachTarget) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    attachTarget.shots.push(reader.result);
-    save(); render();
+  addBtn.onclick = () => {
+    const name = (nameInput.value || '').trim();
+    if(!name){ showBanner('Please enter a name', true); return; }
+    addOrUpdatePerson(name);
+    nameInput.value = '';
+    render();
   };
-  reader.readAsDataURL(file);
-};
 
-function prediction(p) {
-  return Math.round(p.score + (p.focus?30:0));
-}
+  decayBtn.onclick = () => {
+    runDecay(true); // force test
+    render();
+  };
 
-function render() {
-  list.innerHTML="";
-  data.forEach(p=>{
-    const c=document.createElement("div");
-    c.className="card";
-    c.innerHTML=`
-      <b>${p.name} — ${p.score}%</b>
-      ${p.focus?'<span class="focus">FOCUS</span>':""}
-      <div class="bar"><div class="fill" style="width:${p.score}%"></div></div>
-      <div class="row">
-        <button onclick="changeScore(data[${data.indexOf(p)}],-10)">-10</button>
-        <button onclick="changeScore(data[${data.indexOf(p)}],10)">+10</button>
-        <button onclick="toggleFocus(data[${data.indexOf(p)}])">${p.focus?"Unfocus":"Focus"}</button>
-        <button onclick="attach(data[${data.indexOf(p)}])">📷 Attach</button>
-        <button onclick="data.splice(${data.indexOf(p)},1);save();render()">Delete</button>
-      </div>
-      <div class="small">Prediction: ${prediction(p)} — ${prediction(p)>110?"Most Likely":"Developing"}</div>
-      ${p.shots.map(s=>`<img class="thumb" src="${s}">`).join("")}
-    `;
-    list.appendChild(c);
-  });
-}
+  // utilities
+  function uid(){ return Math.random().toString(36).slice(2,9); }
+  function now(){ return Date.now(); }
 
-render();
-</script>
+  function loadPersons(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return [];
+  }
+  function persist(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persons));
+  }
 
-</body>
-</html>
+  function showBanner(txt, danger=false, ttl=3500){
+    banner.textContent = txt;
+    banner.style.display = 'block';
+    banner.style.background = danger ? '#ffb238' : '#ffb238';
+    if(bannerTimeout) clearTimeout(bannerTimeout);
+    bannerTimeout = setTimeout(()=> banner.style.display='none', ttl);
+  }
+
+  // add or update person (by name)
+  function addOrUpdatePerson(name){
+    let p = persons.find(x => x.name.toLowerCase() === name.toLowerCase());
+    if(p){
+      p.updatedAt = now();
+      showBanner('Updated '+p.name);
+    } else {
+      p = {
+        id: uid(),
+        name,
+        score: 0,
+        status: 'active',
+        isFocus: false,
+        focusAt: null,
+        screenshots: [],
+        updatedAt: now()
+      };
+      persons.push(p);
+      showBanner('Added '+name);
+    }
+    persist();
+    checkAutoFocus();
+  }
+
+  // remove person
+  function deletePerson(id){
+    persons = persons.filter(p => p.id !== id);
+    persist();
+    render();
+  }
+
+  // clamp
+  function clampScore(s){
+    if(s < 0) return 0;
+    if(s >
