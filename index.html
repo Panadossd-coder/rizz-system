@@ -9,13 +9,48 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 16px;
+
+    h1 {
+      margin-bottom: 20px;
     }
-    ul {
-      margin-top: 20px;
+
+    input {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      margin-right: 5px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin: 2px;
+    }
+
+    .person {
+      margin: 15px 0;
+    }
+
+    .bar-container {
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 18px;
+      margin: 6px 0;
+    }
+
+    .bar {
+      background: #00ff88;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .controls button {
+      background: #222;
+      color: #fff;
     }
   </style>
 </head>
@@ -24,10 +59,9 @@
   <h1>🔥 Rizz System Dashboard</h1>
 
   <input id="nameInput" placeholder="Enter name (e.g. Sharifah)">
-  <br>
   <button onclick="addPerson()">Add / Update</button>
 
-  <ul id="list"></ul>
+  <div id="list"></div>
 
   <script>
     let people = JSON.parse(localStorage.getItem("rizzPeople")) || [];
@@ -36,28 +70,44 @@
       localStorage.setItem("rizzPeople", JSON.stringify(people));
     }
 
-    function render() {
-      const list = document.getElementById("list");
-      list.innerHTML = "";
-      people.forEach(name => {
-        const li = document.createElement("li");
-        li.textContent = name;
-        list.appendChild(li);
-      });
-    }
-
     function addPerson() {
-      const input = document.getElementById("nameInput");
-      const name = input.value.trim();
+      const name = nameInput.value.trim();
       if (!name) return;
 
-      if (!people.includes(name)) {
-        people.push(name);
-        save();
-        render();
+      let existing = people.find(p => p.name === name);
+      if (!existing) {
+        people.push({ name, progress: 0 });
       }
 
-      input.value = "";
+      nameInput.value = "";
+      save();
+      render();
+    }
+
+    function changeProgress(index, amount) {
+      people[index].progress += amount;
+      if (people[index].progress < 0) people[index].progress = 0;
+      if (people[index].progress > 100) people[index].progress = 100;
+      save();
+      render();
+    }
+
+    function render() {
+      list.innerHTML = "";
+      people.forEach((p, i) => {
+        list.innerHTML += `
+          <div class="person">
+            <strong>${p.name} — ${p.progress}%</strong>
+            <div class="bar-container">
+              <div class="bar" style="width:${p.progress}%"></div>
+            </div>
+            <div class="controls">
+              <button onclick="changeProgress(${i}, -10)">-10</button>
+              <button onclick="changeProgress(${i}, 10)">+10</button>
+            </div>
+          </div>
+        `;
+      });
     }
 
     render();
