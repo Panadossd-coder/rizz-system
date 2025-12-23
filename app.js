@@ -1,112 +1,145 @@
-const MAX_FOCUS = 2;
-const AUTO_FOCUS_AT = 90;
-const STORAGE = "rizz_v1_clean";
+const STORAGE_KEY = "rizz_v1";
+const FOCUS_LIMIT = 2;
+const AUTO_FOCUS = 90;
+const DECAY_STEP = 10;
 
 const nameInput = document.getElementById("nameInput");
 const addBtn = document.getElementById("addBtn");
 const decayBtn = document.getElementById("decayBtn");
-const peopleDiv = document.getElementById("people");
+const container = document.getElementById("peopleContainer");
+const alertBox = document.getElementById("alertBox");
 
-let state = JSON.parse(localStorage.getItem(STORAGE)) || [];
+let state = loadState();
 
-function save() {
-  localStorage.setItem(STORAGE, JSON.stringify(state));
+/* ---------- helpers ---------- */
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function clamp(n) {
-  return Math.max(0, Math.min(100, n));
+function loadState(){
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+    people: [],
+    lastDecay: Date.now()
+  };
 }
 
-function render() {
-  peopleDiv.innerHTML = "";
-
-  state.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const header = document.createElement("div");
-    header.className = "header";
-    header.innerHTML = `
-      <strong>${p.name} — ${p.score}%</strong>
-      ${p.focus ? `<span class="focus">FOCUS</span>` :
-        `<span class="status">${p.paused ? "PAUSED" : "ACTIVE"}</span>`}
-    `;
-
-    const bar = document.createElement("div");
-    bar.className = "bar";
-    bar.innerHTML = `<div class="fill" style="width:${p.score}%"></div>`;
-
-    const actions = document.createElement("div");
-    actions.className = "actions";
-    actions.innerHTML = `
-      <button data-act="minus">-10</button>
-      <button data-act="plus">+10</button>
-      <button data-act="focus">${p.focus ? "Unfocus" : "Focus"}</button>
-      <button data-act="pause">${p.paused ? "Active" : "Pause"}</button>
-      <button data-act="delete" class="danger">Delete</button>
-    `;
-
-    actions.onclick = e => {
-      const act = e.target.dataset.act;
-      if (!act) return;
-
-      if (act === "minus") p.score = clamp(p.score - 10);
-      if (act === "plus") p.score = clamp(p.score + 10);
-      if (act === "delete") {
-        state = state.filter(x => x !== p);
-      }
-      if (act === "pause") {
-        p.paused = !p.paused;
-        p.focus = false;
-      }
-      if (act === "focus") {
-        if (p.focus) {
-          p.focus = false;
-        } else {
-          const focused = state.filter(x => x.focus);
-          if (focused.length >= MAX_FOCUS) {
-            focused[0].focus = false;
-          }
-          p.focus = true;
-        }
-      }
-
-      if (p.score >= AUTO_FOCUS_AT && !p.paused) {
-        const focused = state.filter(x => x.focus);
-        if (!p.focus && focused.length < MAX_FOCUS) p.focus = true;
-      }
-
-      save();
-      render();
-    };
-
-    card.append(header, bar, actions);
-    peopleDiv.appendChild(card);
-  });
+function showAlert(msg){
+  alertBox.textContent = msg;
+  alertBox.classList.remove("hidden");
+  setTimeout(()=>alertBox.classList.add("hidden"),1500);
 }
 
-addBtn.onclick = () => {
+/* ---------- core actions ---------- */
+function addPerson(){
   const name = nameInput.value.trim();
-  if (!name) return;
+  if(!name) return;
 
-  let p = state.find(x => x.name.toLowerCase() === name.toLowerCase());
-  if (!p) {
-    p = { name, score: 0, focus: false, paused: false };
-    state.push(p);
+  const existing = state.people.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if(!existing){
+    state.people.push({
+      id: Date.now(),
+      name,
+      score: 0,
+      focus:false,
+      paused:false
+    });
+    showAlert("Added " + name);
+  } else {
+    showAlert("Updated " + name);
   }
-  save();
-  render();
-  nameInput.value = "";
-};
 
-decayBtn.onclick = () => {
-  state.forEach(p => {
-    if (!p.paused && !p.focus) {
-      p.score = clamp(p.score - 10);
+  nameInput.value="";
+  saveState();
+  render();
+}
+
+function changeScore(id, delta){
+  const p = state.people.find(p=>p.id===id);
+  if(!p) return;
+
+  p.score = Math.max(0, Math.min(100, p.score + delta));
+  applyAutoFocus();
+  saveState();
+  render();
+}
+
+function toggleFocus(id){
+  const focused = state.people.filter(p=>p.focus);
+  const p = state.people.find(p=>p.id===id);
+
+  if(p.focus){
+    p.focus=false;
+  } else {
+    if(focused.length >= FOCUS_LIMIT){
+      focused[0].focus=false;
+    }
+    p.focus=true;
+  }
+
+  saveState();
+  render();
+}
+
+function applyAutoFocus(){
+  state.people.forEach(p=>{
+    if(p.score >= AUTO_FOCUS && !p.focus){
+      toggleFocus(p.id);
     }
   });
-  save();
+}
+
+function runDecay(){
+  state.people.forEach(p=>{
+    if(!p.focus && !p.paused){
+      p.score = Math.max(0, p.score - DECAY_STEP);
+    }
+  });
+  saveState();
   render();
-};
+  showAlert("Decay applied");
+}
+
+/* ---------- render ---------- */
+function render(){
+  container.innerHTML="";
+
+  state.people.forEach(p=>{
+    const card = document.createElement("div");
+    card.className="card";
+
+    card.innerHTML = `
+      <div class="row">
+        <strong>${p.name} — ${p.score}%</strong>
+        ${p.focus ? `<span class="badge">FOCUS</span>` : ""}
+      </div>
+
+      <div class="progress">
+        <div class="bar" style="width:${p.score}%"></div>
+      </div>
+
+      <div class="controls-row">
+        <button class="action">-10</button>
+        <button class="action">+10</button>
+        <button class="action">${p.focus ? "Unfocus":"Focus"}</button>
+        <button class="action danger">Delete</button>
+      </div>
+    `;
+
+    const [minus, plus, focusBtn, del] = card.querySelectorAll("button");
+    minus.onclick = ()=>changeScore(p.id,-10);
+    plus.onclick = ()=>changeScore(p.id,10);
+    focusBtn.onclick = ()=>toggleFocus(p.id);
+    del.onclick = ()=>{
+      state.people = state.people.filter(x=>x.id!==p.id);
+      saveState(); render();
+    };
+
+    container.appendChild(card);
+  });
+}
+
+/* ---------- events ---------- */
+addBtn.onclick = addPerson;
+decayBtn.onclick = runDecay;
 
 render();
