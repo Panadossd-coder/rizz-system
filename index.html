@@ -1,149 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Rizz System Dashboard</title>
+
 <style>
-  :root{--bg:#000;--fg:#fff;--muted:#666;--accent:#00ff88;--danger:#ff6b6b}
-  body{background:var(--bg);color:var(--fg);font-family:system-ui,Arial; padding:22px}
-  h1{font-size:30px;margin:0 0 14px}
-  input, button{padding:8px 10px;border-radius:8px;border:0;outline:none}
-  input{min-width:180px;margin-right:8px}
-  button{background:#efefef;color:#000}
-  .person{margin-top:18px}
-  .bar{background:#222;height:14px;border-radius:8px;overflow:hidden;margin:8px 0}
-  .fill{height:100%;background:var(--accent);width:0%}
-  .controls button{margin-right:6px;margin-top:6px}
-  .status{display:inline-block;padding:4px 8px;border-radius:6px;margin-left:8px;font-size:12px}
-  .Active{background:#444;color:#fff}
-  .Focus{background:var(--accent);color:#000}
-  .Pause{background:var(--danger);color:#fff}
-  .delete{background:#111;color:#fff;padding:5px 8px;border-radius:6px;margin-left:8px}
-  small{color:var(--muted)}
+body {
+  background: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  padding: 20px;
+}
+h1 { font-size: 28px; }
+input, button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-right: 6px;
+}
+button { cursor: pointer; }
+.progress {
+  width: 100%;
+  background: #222;
+  border-radius: 10px;
+  height: 14px;
+  margin: 8px 0;
+}
+.fill {
+  height: 100%;
+  border-radius: 10px;
+  background: #00ff99;
+}
+.card {
+  margin: 20px 0;
+}
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: 8px;
+  font-size: 12px;
+}
+.focus { background: #00ff99; color:#000; }
+.active { background:#333; }
+.pause { background:#555; }
+.controls button {
+  margin: 4px 4px 0 0;
+}
 </style>
 </head>
-<body>
-  <h1>🔥 Rizz System Dashboard</h1>
 
-  <input id="nameInput" placeholder="Enter name (e.g. Charity)" />
-  <button id="addBtn">Add / Update</button>
-  <div id="list" style="margin-top:12px"></div>
+<body>
+<h1>🔥 Rizz System Dashboard</h1>
+
+<input id="nameInput" placeholder="Enter name (e.g. Charity)" />
+<button onclick="addPerson()">Add / Update</button>
+
+<div id="list"></div>
 
 <script>
-/* SAFE LOAD & SANITIZE */
-function loadPeople() {
-  try {
-    const raw = localStorage.getItem('rizzPeople');
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    const out = {};
-    // Keep only valid string keys that are not empty
-    Object.entries(parsed).forEach(([k,v])=>{
-      if (typeof k === 'string' && k.trim().length>0) {
-        const name = k.trim();
-        out[name] = {
-          score: (v && typeof v.score === 'number') ? Math.max(0, Math.min(100, v.score)) : 10,
-          status: (v && typeof v.status === 'string' && v.status.length>0) ? v.status : 'Active'
-        };
-      }
-    });
-    return out;
-  } catch(e){
-    console.warn('loadPeople error', e);
-    return {};
-  }
+const STORAGE_KEY = "rizzSystemData";
+
+function loadData() {
+  let raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+
+  // 🔥 HARD CLEAN: remove invalid keys
+  let clean = {};
+  Object.keys(raw).forEach(k => {
+    if (typeof k === "string" && isNaN(k) && raw[k]?.name) {
+      clean[k] = raw[k];
+    }
+  });
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+  return clean;
 }
 
-let people = loadPeople();
-
-function save() {
-  localStorage.setItem('rizzPeople', JSON.stringify(people));
-}
-
-function sanitizeName(name) {
-  return name ? String(name).trim() : '';
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
 function addPerson() {
-  const raw = document.getElementById('nameInput').value;
-  const name = sanitizeName(raw);
-  if (!name) {
-    alert('Enter a name before adding.');
-    return;
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return;
+
+  const data = loadData();
+  if (!data[name]) {
+    data[name] = { name, score: 0, status: "Active" };
   }
-  if (!people[name]) people[name] = { score: 10, status: 'Active' };
-  save();
-  document.getElementById('nameInput').value = '';
+  saveData(data);
+  document.getElementById("nameInput").value = "";
   render();
 }
 
-function changeScore(name, delta) {
-  if (!people[name]) return;
-  people[name].score = Math.max(0, Math.min(100, (Number(people[name].score)||0) + delta));
-  save();
+function updateScore(name, delta) {
+  const data = loadData();
+  data[name].score = Math.max(0, Math.min(100, data[name].score + delta));
+  saveData(data);
   render();
 }
 
 function setStatus(name, status) {
-  if (!people[name]) return;
-  if (status === 'Focus') {
-    // only one focus allowed: clear others
-    Object.keys(people).forEach(k => { if (people[k].status === 'Focus') people[k].status = 'Active'; });
-  }
-  people[name].status = status;
-  save();
+  const data = loadData();
+  data[name].status = status;
+  saveData(data);
   render();
 }
 
-function deletePerson(name) {
-  if (!people[name]) return;
-  if (!confirm('Delete ' + name + ' ?')) return;
-  delete people[name];
-  save();
+function removePerson(name) {
+  const data = loadData();
+  delete data[name];
+  saveData(data);
   render();
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
 function render() {
-  const list = document.getElementById('list');
-  list.innerHTML = '';
-  // sort by score desc
-  const entries = Object.entries(people).sort((a,b)=> (b[1].score||0) - (a[1].score||0));
-  if (entries.length === 0) list.innerHTML = '<small>No people yet — add one above.</small>';
-  entries.forEach(([name,data])=>{
-    data.score = Math.max(0, Math.min(100, Number(data.score)||0));
-    if (!data.status) data.status = 'Active';
+  const data = loadData();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
-    const div = document.createElement('div');
-    div.className = 'person';
+  Object.values(data).forEach(p => {
+    const div = document.createElement("div");
+    div.className = "card";
     div.innerHTML = `
-      <div><strong>${escapeHtml(name)} — ${data.score}%</strong>
-        <span class="status ${escapeHtml(data.status)}">${escapeHtml(data.status)}</span>
-        <button class="delete" onclick="deletePerson('${escapeHtml(name)}')">Delete</button>
+      <strong>${p.name} — ${p.score}%</strong>
+      <span class="badge ${p.status.toLowerCase()}">${p.status}</span>
+
+      <div class="progress">
+        <div class="fill" style="width:${p.score}%"></div>
       </div>
 
-      <div class="bar"><div class="fill" style="width:${data.score}%"></div></div>
-
       <div class="controls">
-        <button onclick="changeScore('${escapeHtml(name)}', -10)">-10</button>
-        <button onclick="changeScore('${escapeHtml(name)}', 10)">+10</button>
-        <button onclick="setStatus('${escapeHtml(name)}', 'Focus')">Focus</button>
-        <button onclick="setStatus('${escapeHtml(name)}', 'Pause')">Pause</button>
-        <button onclick="setStatus('${escapeHtml(name)}', 'Active')">Active</button>
+        <button onclick="updateScore('${p.name}', -10)">-10</button>
+        <button onclick="updateScore('${p.name}', 10)">+10</button>
+        <button onclick="setStatus('${p.name}','Focus')">Focus</button>
+        <button onclick="setStatus('${p.name}','Pause')">Pause</button>
+        <button onclick="setStatus('${p.name}','Active')">Active</button>
+        <button onclick="removePerson('${p.name}')">Delete</button>
       </div>
     `;
     list.appendChild(div);
   });
 }
 
-// wire UI
-document.getElementById('addBtn').addEventListener('click', addPerson);
-
-// first render
 render();
 </script>
 </body>
