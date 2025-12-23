@@ -1,149 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Rizz System Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>Rizz System Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<style>
-body {
-  background: #000;
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  padding: 20px;
-}
-h1 { font-size: 28px; }
-input, button {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  margin-right: 6px;
-}
-button { cursor: pointer; }
-.progress {
-  width: 100%;
-  background: #222;
-  border-radius: 10px;
-  height: 14px;
-  margin: 8px 0;
-}
-.fill {
-  height: 100%;
-  border-radius: 10px;
-  background: #00ff99;
-}
-.card {
-  margin: 20px 0;
-}
-.badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  margin-left: 8px;
-  font-size: 12px;
-}
-.focus { background: #00ff99; color:#000; }
-.active { background:#333; }
-.pause { background:#555; }
-.controls button {
-  margin: 4px 4px 0 0;
-}
-</style>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    input {
+      width: 65%;
+      margin-right: 10px;
+    }
+
+    button {
+      background: #eaeaea;
+      cursor: pointer;
+    }
+
+    .card {
+      margin-top: 25px;
+    }
+
+    .name {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .badge {
+      margin-left: 8px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .focus { background: #00ff88; color: #000; }
+    .pause { background: #777; }
+    .active { background: #444; }
+
+    .bar {
+      height: 10px;
+      background: #333;
+      border-radius: 6px;
+      margin: 8px 0;
+    }
+
+    .fill {
+      height: 100%;
+      background: #00ff88;
+      border-radius: 6px;
+      width: 0%;
+    }
+
+    .controls button {
+      margin-right: 6px;
+      margin-top: 8px;
+    }
+  </style>
 </head>
 
 <body>
+
 <h1>🔥 Rizz System Dashboard</h1>
 
-<input id="nameInput" placeholder="Enter name (e.g. Charity)" />
+<input id="nameInput" placeholder="Enter name (e.g. Charity)">
 <button onclick="addPerson()">Add / Update</button>
 
 <div id="list"></div>
 
 <script>
-const STORAGE_KEY = "rizzSystemData";
+  let people = JSON.parse(localStorage.getItem("rizz")) || [];
 
-function loadData() {
-  let raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-
-  // 🔥 HARD CLEAN: remove invalid keys
-  let clean = {};
-  Object.keys(raw).forEach(k => {
-    if (typeof k === "string" && isNaN(k) && raw[k]?.name) {
-      clean[k] = raw[k];
-    }
-  });
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
-  return clean;
-}
-
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function addPerson() {
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return;
-
-  const data = loadData();
-  if (!data[name]) {
-    data[name] = { name, score: 0, status: "Active" };
+  function save() {
+    localStorage.setItem("rizz", JSON.stringify(people));
   }
-  saveData(data);
-  document.getElementById("nameInput").value = "";
+
+  function autoFocus() {
+    let activePeople = people.filter(p => p.status !== "pause");
+    if (activePeople.length === 0) return;
+
+    let top = activePeople.reduce((a, b) => a.score > b.score ? a : b);
+    people.forEach(p => p.status = p === top ? "focus" : p.status === "pause" ? "pause" : "active");
+  }
+
+  function addPerson() {
+    let name = document.getElementById("nameInput").value.trim();
+    if (!name) return;
+
+    let existing = people.find(p => p.name === name);
+    if (!existing) {
+      people.push({ name, score: 0, status: "active" });
+    }
+
+    autoFocus();
+    save();
+    render();
+    document.getElementById("nameInput").value = "";
+  }
+
+  function changeScore(i, delta) {
+    people[i].score = Math.max(0, Math.min(100, people[i].score + delta));
+    autoFocus();
+    save();
+    render();
+  }
+
+  function setStatus(i, status) {
+    people[i].status = status;
+    autoFocus();
+    save();
+    render();
+  }
+
+  function del(i) {
+    people.splice(i, 1);
+    autoFocus();
+    save();
+    render();
+  }
+
+  function render() {
+    let list = document.getElementById("list");
+    list.innerHTML = "";
+
+    people.forEach((p, i) => {
+      let badge =
+        p.status === "focus" ? "focus" :
+        p.status === "pause" ? "pause" : "active";
+
+      list.innerHTML += `
+        <div class="card">
+          <div class="name">
+            ${p.name} — ${p.score}%
+            <span class="badge ${badge}">${p.status.toUpperCase()}</span>
+          </div>
+
+          <div class="bar">
+            <div class="fill" style="width:${p.score}%"></div>
+          </div>
+
+          <div class="controls">
+            <button onclick="changeScore(${i}, -10)">-10</button>
+            <button onclick="changeScore(${i}, 10)">+10</button>
+            <button onclick="setStatus(${i}, 'active')">Active</button>
+            <button onclick="setStatus(${i}, 'pause')">Pause</button>
+            <button onclick="del(${i})">Delete</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+
   render();
-}
-
-function updateScore(name, delta) {
-  const data = loadData();
-  data[name].score = Math.max(0, Math.min(100, data[name].score + delta));
-  saveData(data);
-  render();
-}
-
-function setStatus(name, status) {
-  const data = loadData();
-  data[name].status = status;
-  saveData(data);
-  render();
-}
-
-function removePerson(name) {
-  const data = loadData();
-  delete data[name];
-  saveData(data);
-  render();
-}
-
-function render() {
-  const data = loadData();
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  Object.values(data).forEach(p => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <strong>${p.name} — ${p.score}%</strong>
-      <span class="badge ${p.status.toLowerCase()}">${p.status}</span>
-
-      <div class="progress">
-        <div class="fill" style="width:${p.score}%"></div>
-      </div>
-
-      <div class="controls">
-        <button onclick="updateScore('${p.name}', -10)">-10</button>
-        <button onclick="updateScore('${p.name}', 10)">+10</button>
-        <button onclick="setStatus('${p.name}','Focus')">Focus</button>
-        <button onclick="setStatus('${p.name}','Pause')">Pause</button>
-        <button onclick="setStatus('${p.name}','Active')">Active</button>
-        <button onclick="removePerson('${p.name}')">Delete</button>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-}
-
-render();
 </script>
+
 </body>
 </html>
