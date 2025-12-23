@@ -11,47 +11,25 @@ html,body{
   margin:0;
   background:var(--bg);
   color:#fff;
-  font-family:system-ui, sans-serif;
+  font-family:Inter,system-ui;
 }
 
-.wrap{
-  max-width:760px;
-  margin:auto;
-  padding:20px;
-}
+.wrap{max-width:760px;margin:auto;padding:20px}
 
-h1{margin-bottom:20px}
+h1{font-size:36px}
 
-.controls{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
 
-.input{
-  flex:1;
-  padding:14px;
-  border-radius:12px;
-  border:0;
-}
+.input{flex:1;padding:14px;border-radius:14px;border:0}
 
-.btn{
-  padding:12px;
-  border-radius:12px;
-  border:0;
-  cursor:pointer;
-}
-
-.btn-dark{
-  background:#1b1c1d;
-  color:#9fb8ff;
-}
+.btn{padding:12px 16px;border-radius:14px;border:0;cursor:pointer}
+.btn-dark{background:#1b1c1d;color:#9fb8ff}
 
 .card{
   background:var(--card);
   padding:16px;
   border-radius:16px;
-  margin-top:16px;
+  margin-top:14px;
 }
 
 .progress{
@@ -63,7 +41,7 @@ h1{margin-bottom:20px}
 
 .bar{
   height:100%;
-  background:linear-gradient(90deg,var(--accent),#2be4a2);
+  background:linear-gradient(90deg,var(--accent),#1fc88f);
 }
 
 .controls-row{
@@ -74,35 +52,19 @@ h1{margin-bottom:20px}
 }
 
 .action{
-  padding:10px;
-  border-radius:12px;
   background:#0f1720;
   color:#9fb8ff;
-  border:0;
-}
-
-.danger{
-  background:var(--danger);
-  color:#400;
-}
-
-.badge{
-  background:var(--accent);
-  padding:6px 10px;
-  border-radius:10px;
-  color:#003;
-  font-weight:700;
-}
-
-.alert{
-  background:#ffb020;
-  color:#2a1400;
-  padding:12px;
+  padding:10px 14px;
   border-radius:12px;
-  margin-top:12px;
+  border:0;
+  cursor:pointer;
 }
 
-.note{
-  margin-top:20px;
-  color:var(--muted);
-}
+.danger{background:var(--danger);color:#400}
+
+.badge{background:var(--accent);color:#00261a;padding:6px 10px;border-radius:10px}
+
+.alert{background:#ffb020;color:#000;padding:10px;border-radius:10px;margin-top:10px}
+.hidden{display:none}
+
+.note{color:var(--muted);margin-top:20px}
