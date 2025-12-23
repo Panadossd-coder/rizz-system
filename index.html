@@ -6,260 +6,214 @@
 <title>🔥 Rizz System — Version 1 (Phase A)</title>
 
 <style>
-  body {
-    margin: 0;
-    background: #000;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-  .container {
-    max-width: 420px;
-    margin: auto;
-    padding: 20px;
-  }
-  h1 {
-    font-size: 28px;
-    margin-bottom: 12px;
-  }
-  input {
-    width: 100%;
-    padding: 14px;
-    border-radius: 14px;
-    border: none;
-    margin-bottom: 10px;
-    font-size: 16px;
-  }
-  button {
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: none;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  .btn {
-    background: #1e90ff;
-    color: #fff;
-  }
-  .btn.gray {
-    background: #333;
-  }
-  .card {
-    background: #111;
-    border-radius: 18px;
-    padding: 14px;
-    margin-top: 16px;
-  }
-  .bar {
-    height: 10px;
-    background: #222;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 10px 0;
-  }
-  .bar span {
-    display: block;
-    height: 100%;
-    background: linear-gradient(90deg,#00ffa3,#00cc88);
-  }
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .focus {
-    background: #00cc88;
-    color: #000;
-  }
-  .active {
-    background: #555;
-  }
-  .delete {
-    background: #ff5c5c;
-    color: #000;
-  }
-  small {
-    color: #aaa;
-  }
-  img.thumb {
-    width: 80px;
-    border-radius: 10px;
-    margin-top: 8px;
-  }
+body {
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+  margin:0;
+  padding:20px;
+}
+h1 { font-size:28px; margin-bottom:15px; }
+input,button {
+  border:none;
+  border-radius:14px;
+  padding:14px;
+  font-size:15px;
+}
+input { width:100%; margin-bottom:10px; }
+button {
+  background:#e6e6e6;
+  margin:5px 4px;
+}
+.primary { background:#dbeafe; }
+.danger { background:#ff7b7b; }
+.focus { background:#22c55e; color:#000; font-weight:600; }
+.card {
+  background:#111;
+  border-radius:18px;
+  padding:15px;
+  margin-top:15px;
+}
+.bar {
+  height:12px;
+  background:#222;
+  border-radius:10px;
+  overflow:hidden;
+}
+.fill {
+  height:100%;
+  background:linear-gradient(90deg,#00ffa3,#00c6ff);
+}
+.badge {
+  padding:6px 12px;
+  border-radius:12px;
+  font-size:13px;
+}
+.gray { background:#333; }
+.green { background:#22c55e; color:#000; }
+.thumb {
+  width:70px;
+  border-radius:8px;
+  margin-top:8px;
+}
+small { color:#aaa; }
 </style>
 </head>
 
 <body>
-<div class="container">
-  <h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-  <input id="nameInput" placeholder="Add name (e.g. Charity)" />
-  <button class="btn" onclick="addOrUpdate()">Add / Update</button>
-  <button class="btn gray" onclick="runDecay()">Run Decay (test)</button>
+<h1>🔥 Rizz System — Version 1 (Phase A)</h1>
 
-  <div id="list"></div>
+<input id="nameInput" placeholder="Add name (e.g. Charity)" />
+<button class="primary" onclick="addPerson()">Add / Update</button>
+<button onclick="runDecay()">Run Decay (test)</button>
 
-  <small>
-    +10 / −10 clamps 0–100.  
-    Focus limit = 2.  
-    Auto-focus at ≥90%.  
-    Decay −10 every 2 days (real time).
-  </small>
-</div>
+<div id="list"></div>
+
+<small>
++10 / -10 clamps to 0–100.  
+Auto-focus at ≥90%.  
+Focus limit = 2.  
+Decay −10 every 2 days.  
+Saved locally.
+</small>
 
 <script>
-const STORAGE_KEY = "rizz_v1_phaseA";
-let people = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+let data = JSON.parse(localStorage.getItem("rizz_v1")) || {};
 
 function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
+  localStorage.setItem("rizz_v1", JSON.stringify(data));
 }
 
-function focusedCount() {
-  return people.filter(p => p.focused).length;
-}
-
-function addOrUpdate() {
-  const name = document.getElementById("nameInput").value.trim();
+function addPerson() {
+  const name = nameInput.value.trim();
   if (!name) return;
-
-  let p = people.find(x => x.name === name);
-  if (!p) {
-    p = {
-      name,
+  if (!data[name]) {
+    data[name] = {
       score: 0,
-      focused: false,
+      focus: false,
       paused: false,
-      lastUpdate: Date.now(),
-      image: null
+      updated: Date.now(),
+      shots: []
     };
-    people.push(p);
   }
   save();
   render();
-  document.getElementById("nameInput").value = "";
+  nameInput.value="";
 }
 
-function adjust(name, delta) {
-  const p = people.find(x => x.name === name);
-  if (!p) return;
-
+function setScore(name, delta) {
+  const p = data[name];
+  if (p.paused) return;
   p.score = Math.max(0, Math.min(100, p.score + delta));
-  p.lastUpdate = Date.now();
-
-  // AUTO-FOCUS LOGIC (FIXED)
-  if (p.score >= 90 && !p.focused) {
-    autoFocus(p);
-  }
-
+  p.updated = Date.now();
+  autoFocus();
   save();
   render();
 }
 
-function autoFocus(p) {
-  const focused = people.filter(x => x.focused);
-  if (focused.length >= 2) {
-    focused.sort((a,b) => a.lastUpdate - b.lastUpdate)[0].focused = false;
-  }
-  p.focused = true;
+function autoFocus() {
+  const focused = Object.values(data).filter(p=>p.focus).length;
+  Object.entries(data).forEach(([name,p])=>{
+    if (p.score >= 90 && !p.focus && focused < 2) {
+      p.focus = true;
+    }
+  });
 }
 
 function toggleFocus(name) {
-  const p = people.find(x => x.name === name);
-  if (!p) return;
-
-  if (!p.focused && focusedCount() >= 2) return;
-  p.focused = !p.focused;
-  p.lastUpdate = Date.now();
+  const focused = Object.values(data).filter(p=>p.focus).length;
+  if (!data[name].focus && focused >= 2) return;
+  data[name].focus = !data[name].focus;
   save();
   render();
 }
 
 function togglePause(name) {
-  const p = people.find(x => x.name === name);
-  p.paused = !p.paused;
+  data[name].paused = !data[name].paused;
   save();
   render();
 }
 
-function remove(name) {
-  people = people.filter(p => p.name !== name);
+function del(name) {
+  delete data[name];
   save();
   render();
-}
-
-function attachImage(name) {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-  input.onchange = e => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      const p = people.find(x => x.name === name);
-      p.image = reader.result;
-      save();
-      render();
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
 }
 
 function runDecay() {
   const now = Date.now();
-  people.forEach(p => {
-    if (p.paused) return;
-    const days = (now - p.lastUpdate) / (1000*60*60*24);
-    if (days >= 2) {
-      const steps = Math.floor(days / 2);
-      p.score = Math.max(0, p.score - steps * 10);
-      p.lastUpdate = now;
-      if (p.score < 90) p.focused = false;
+  Object.values(data).forEach(p=>{
+    const days = (now - p.updated) / (1000*60*60*24);
+    if (days >= 2 && !p.paused) {
+      p.score = Math.max(0, p.score - 10);
+      p.updated = now;
+      if (p.score < 90) p.focus = false;
     }
   });
   save();
   render();
 }
 
+function attach(name, file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    data[name].shots.push(e.target.result);
+    save();
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
 function prediction(score) {
-  if (score >= 90) return "Very Likely";
+  if (score >= 90) return "Most Likely";
   if (score >= 70) return "Possible";
-  if (score >= 50) return "Unlikely";
-  return "Low Chance";
+  return "Unlikely";
 }
 
 function render() {
-  const el = document.getElementById("list");
-  el.innerHTML = "";
-
-  people.forEach(p => {
+  list.innerHTML="";
+  Object.entries(data).forEach(([name,p])=>{
     const card = document.createElement("div");
-    card.className = "card";
+    card.className="card";
 
     card.innerHTML = `
-      <strong>${p.name} — ${p.score}%</strong>
-      ${p.focused ? '<span class="focus"> FOCUS </span>' : p.paused ? '<span class="active"> PAUSED </span>' : '<span class="active"> ACTIVE </span>'}
+      <b>${name} — ${p.score}%</b>
+      <span class="badge ${p.focus?"green":"gray"}">
+        ${p.focus?"FOCUS":p.paused?"PAUSED":"ACTIVE"}
+      </span>
 
-      <div class="bar"><span style="width:${p.score}%"></span></div>
+      <div class="bar"><div class="fill" style="width:${p.score}%"></div></div>
 
-      <div class="row">
-        <button onclick="adjust('${p.name}',-10)">-10</button>
-        <button onclick="adjust('${p.name}',10)">+10</button>
-        <button onclick="toggleFocus('${p.name}')">${p.focused?'Unfocus':'Focus'}</button>
-        <button onclick="togglePause('${p.name}')">${p.paused?'Resume':'Pause'}</button>
-        <button onclick="attachImage('${p.name}')">📷 Attach</button>
-        <button class="delete" onclick="remove('${p.name}')">Delete</button>
+      <div>
+        <button onclick="setScore('${name}',-10)">-10</button>
+        <button onclick="setScore('${name}',10)">+10</button>
+        <button onclick="toggleFocus('${name}')">${p.focus?"Unfocus":"Focus"}</button>
+        <button onclick="togglePause('${name}')">${p.paused?"Active":"Pause"}</button>
+        <button class="danger" onclick="del('${name}')">Delete</button>
+        <label>
+          <button>📷 Attach</button>
+          <input type="file" hidden accept="image/*"
+            onchange="attach('${name}',this.files[0])">
+        </label>
       </div>
 
       <small>Prediction: ${prediction(p.score)}</small>
-      ${p.image ? `<br><img class="thumb" src="${p.image}">` : ""}
     `;
 
-    el.appendChild(card);
+    p.shots.forEach(s=>{
+      const img = document.createElement("img");
+      img.src = s;
+      img.className="thumb";
+      card.appendChild(img);
+    });
+
+    list.appendChild(card);
   });
 }
 
 render();
 </script>
+
 </body>
 </html>
