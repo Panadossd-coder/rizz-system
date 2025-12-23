@@ -1,113 +1,112 @@
-const STORAGE_KEY = 'rizz_v1';
-const FOCUS_LIMIT = 2;
-const AUTO_FOCUS = 90;
+const MAX_FOCUS = 2;
+const AUTO_FOCUS_AT = 90;
+const STORAGE = "rizz_v1_clean";
 
-const nameInput = document.getElementById('nameInput');
-const addBtn = document.getElementById('addBtn');
-const decayBtn = document.getElementById('decayBtn');
-const peopleContainer = document.getElementById('peopleContainer');
-const alertBox = document.getElementById('alertBox');
+const nameInput = document.getElementById("nameInput");
+const addBtn = document.getElementById("addBtn");
+const decayBtn = document.getElementById("decayBtn");
+const peopleDiv = document.getElementById("people");
 
-let state = { people: [], lastDecay: Date.now() };
+let state = JSON.parse(localStorage.getItem(STORAGE)) || [];
 
-function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function load(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw) state = JSON.parse(raw);
+function save() {
+  localStorage.setItem(STORAGE, JSON.stringify(state));
 }
 
-function show(msg){
-  alertBox.textContent = msg;
-  alertBox.classList.remove('hidden');
-  setTimeout(()=>alertBox.classList.add('hidden'),1500);
+function clamp(n) {
+  return Math.max(0, Math.min(100, n));
 }
 
-function clamp(n){ return Math.max(0,Math.min(100,n)); }
+function render() {
+  peopleDiv.innerHTML = "";
 
-function addPerson(name){
-  if(!name) return show("Enter a name");
-  let p = state.people.find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(!p){
-    p={id:Date.now(),name,score:0,focus:false,paused:false};
-    state.people.push(p);
-  }
-  save(); render();
-}
+  state.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-function changeScore(id,delta){
-  const p = state.people.find(x=>x.id===id);
-  if(!p || p.paused) return;
-  p.score = clamp(p.score+delta);
-  autoFocus();
-  save(); render();
-}
-
-function toggleFocus(id){
-  const p = state.people.find(x=>x.id===id);
-  if(!p) return;
-  p.focus=!p.focus;
-  enforceFocusLimit();
-  save(); render();
-}
-
-function togglePause(id){
-  const p = state.people.find(x=>x.id===id);
-  if(!p) return;
-  p.paused=!p.paused;
-  if(p.paused) p.focus=false;
-  save(); render();
-}
-
-function remove(id){
-  state.people = state.people.filter(x=>x.id!==id);
-  save(); render();
-}
-
-function autoFocus(){
-  state.people
-    .filter(p=>p.score>=AUTO_FOCUS && !p.paused)
-    .forEach(p=>p.focus=true);
-  enforceFocusLimit();
-}
-
-function enforceFocusLimit(){
-  const focused = state.people.filter(p=>p.focus);
-  while(focused.length>FOCUS_LIMIT){
-    focused.shift().focus=false;
-  }
-}
-
-function runDecay(){
-  state.people.forEach(p=>{
-    if(!p.focus && !p.paused) p.score=clamp(p.score-10);
-  });
-  save(); render(); show("Decay applied");
-}
-
-function render(){
-  peopleContainer.innerHTML='';
-  state.people.forEach(p=>{
-    const div=document.createElement('div');
-    div.className='card';
-    div.innerHTML=`
-      <div class="row">
-        <strong>${p.name} — ${p.score}%</strong>
-        ${p.focus?'<span class="badge">FOCUS</span>':''}
-      </div>
-      <div class="progress"><div class="bar" style="width:${p.score}%"></div></div>
-      <div class="controls-row">
-        <button class="action" onclick="changeScore(${p.id},-10)">-10</button>
-        <button class="action" onclick="changeScore(${p.id},10)">+10</button>
-        <button class="action" onclick="toggleFocus(${p.id})">${p.focus?'Unfocus':'Focus'}</button>
-        <button class="action" onclick="togglePause(${p.id})">${p.paused?'Active':'Pause'}</button>
-        <button class="action danger" onclick="remove(${p.id})">Delete</button>
-      </div>
+    const header = document.createElement("div");
+    header.className = "header";
+    header.innerHTML = `
+      <strong>${p.name} — ${p.score}%</strong>
+      ${p.focus ? `<span class="focus">FOCUS</span>` :
+        `<span class="status">${p.paused ? "PAUSED" : "ACTIVE"}</span>`}
     `;
-    peopleContainer.appendChild(div);
+
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.innerHTML = `<div class="fill" style="width:${p.score}%"></div>`;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    actions.innerHTML = `
+      <button data-act="minus">-10</button>
+      <button data-act="plus">+10</button>
+      <button data-act="focus">${p.focus ? "Unfocus" : "Focus"}</button>
+      <button data-act="pause">${p.paused ? "Active" : "Pause"}</button>
+      <button data-act="delete" class="danger">Delete</button>
+    `;
+
+    actions.onclick = e => {
+      const act = e.target.dataset.act;
+      if (!act) return;
+
+      if (act === "minus") p.score = clamp(p.score - 10);
+      if (act === "plus") p.score = clamp(p.score + 10);
+      if (act === "delete") {
+        state = state.filter(x => x !== p);
+      }
+      if (act === "pause") {
+        p.paused = !p.paused;
+        p.focus = false;
+      }
+      if (act === "focus") {
+        if (p.focus) {
+          p.focus = false;
+        } else {
+          const focused = state.filter(x => x.focus);
+          if (focused.length >= MAX_FOCUS) {
+            focused[0].focus = false;
+          }
+          p.focus = true;
+        }
+      }
+
+      if (p.score >= AUTO_FOCUS_AT && !p.paused) {
+        const focused = state.filter(x => x.focus);
+        if (!p.focus && focused.length < MAX_FOCUS) p.focus = true;
+      }
+
+      save();
+      render();
+    };
+
+    card.append(header, bar, actions);
+    peopleDiv.appendChild(card);
   });
 }
 
-addBtn.onclick=()=>{ addPerson(nameInput.value); nameInput.value=''; }
-decayBtn.onclick=runDecay;
+addBtn.onclick = () => {
+  const name = nameInput.value.trim();
+  if (!name) return;
 
-load(); render();
+  let p = state.find(x => x.name.toLowerCase() === name.toLowerCase());
+  if (!p) {
+    p = { name, score: 0, focus: false, paused: false };
+    state.push(p);
+  }
+  save();
+  render();
+  nameInput.value = "";
+};
+
+decayBtn.onclick = () => {
+  state.forEach(p => {
+    if (!p.paused && !p.focus) {
+      p.score = clamp(p.score - 10);
+    }
+  });
+  save();
+  render();
+};
+
+render();
