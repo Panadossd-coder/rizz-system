@@ -1,311 +1,109 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Rizz System Dashboard</title>
-<style>
-  :root{--bg:#000;--fg:#fff;--muted:#777;--accent:#00e090;--warn:#ffb300}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  .wrap{padding:18px;max-width:820px;margin:0 auto}
-  h1{font-size:34px;margin:6px 0 18px}
-  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  input[type="text"]{flex:1;padding:14px;border-radius:14px;border:0;background:#111;color:var(--fg);font-size:16px}
-  button{background:#e6eaf0;color:#0a2540;border:0;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
-  .warning{background:var(--warn);color:#000;padding:12px;border-radius:12px;margin-bottom:12px}
-  .person{margin:18px 0;padding-bottom:6px;border-bottom:1px solid #222}
-  .person > .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .person strong{font-size:20px}
-  .tag{display:inline-block;padding:6px 10px;border-radius:10px;font-weight:700}
-  .tag.focus{background:var(--accent);color:#000}
-  .tag.active{background:#333;color:#ddd}
-  .bar{background:#222;height:12px;border-radius:12px;overflow:hidden;margin:10px 0}
-  .fill{height:100%;background:linear-gradient(90deg,var(--accent),#00c57a)}
-  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-  .small{padding:10px;border-radius:12px;background:#111;color:#9fc0ff;border:0}
-  .muted{color:var(--muted);font-size:14px;margin-top:18px}
-  @media (max-width:520px){ h1{font-size:28px} button{padding:10px} }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <h1>🔥 Rizz System Dashboard</h1>
+/* --- Robustness helpers: debounce / disable UI / export-import --- */
 
-  <div id="notify"></div>
-
-  <div class="controls">
-    <input id="nameInput" placeholder="Enter name (e.g. Charity)" />
-    <button id="addBtn">Add / Update</button>
-    <button id="clearBtn">Clear All</button>
-    <button id="decayTestBtn">Run Decay (test)</button>
-  </div>
-
-  <div id="list"></div>
-
-  <div class="muted">Tip: +10 / -10 clamp within 0..100. Focus limit = 2. Decay runs automatically every 48 hours (configurable for testing).</div>
-</div>
-
-<script>
-/* ------------- CONFIG ------------- */
-const TEST_MODE = false;             // set true to test decay quickly
-const DECAY_HOURS = TEST_MODE ? 0.02 : 48; // 48 hours normally
-const DECAY_AMOUNT = 10;             // amount to reduce per decay tick
-const FOCUS_LIMIT = 2;               // max number of focused people
-const STORAGE_KEY = "rizz_system_data_v1";
-/* ---------------------------------- */
-
-/* Safe load from localStorage */
-let people = [];
-try {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  people = raw ? JSON.parse(raw) : [];
-  if (!Array.isArray(people)) people = [];
-} catch (e) {
-  console.warn("Broken storage, resetting", e);
-  people = [];
+function debounce(fn, wait=300) {
+  let t;
+  return function(...args){
+    clearTimeout(t);
+    t = setTimeout(()=> fn.apply(this,args), wait);
+  };
 }
 
-/* DOM refs */
-const listEl = document.getElementById("list");
-const nameInput = document.getElementById("nameInput");
-const addBtn = document.getElementById("addBtn");
-const clearBtn = document.getElementById("clearBtn");
-const notifyEl = document.getElementById("notify");
-const decayTestBtn = document.getElementById("decayTestBtn");
+// disable/enable all interactive buttons to avoid rapid double-click issues
+function setUIEnabled(enabled) {
+  document.querySelectorAll('button, input').forEach(el=>{
+    // keep name input enabled always (so user can type), but disable buttons if requested
+    if (el.tagName.toLowerCase() === 'button') el.disabled = !enabled;
+  });
+}
 
-/* Utility */
-const now = () => Date.now();
-const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
-
-function save() {
+// wrap original addOrUpdate with protection & debounce
+const originalAddOrUpdate = window.addOrUpdate;
+window.addOrUpdate = debounce(function(){
+  setUIEnabled(false);
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
-  } catch (e) {
-    console.error("Failed to save:", e);
+    originalAddOrUpdate();
+  } finally {
+    // small timeout to avoid instant re-enable while render still settling
+    setTimeout(()=>setUIEnabled(true), 120);
   }
-}
+}, 250);
 
-/* Show temporary notification */
-let notifTimer = null;
-function notify(msg) {
-  notifyEl.innerHTML = `<div class="warning">${msg}</div>`;
-  if (notifTimer) clearTimeout(notifTimer);
-  notifTimer = setTimeout(()=> notifyEl.innerHTML = "", 2800);
-}
-
-/* Render UI */
-function render() {
-  listEl.innerHTML = "";
-  if (people.length === 0) {
-    listEl.innerHTML = `<div class="muted">No people yet. Add someone above.</div>`;
-    return;
+// safer changeScore wrapper to protect mass clicks
+const originalChangeScore = window.changeScore;
+window.changeScore = function(name, delta){
+  setUIEnabled(false);
+  try {
+    originalChangeScore(name, delta);
+  } finally {
+    setTimeout(()=>setUIEnabled(true), 120);
   }
-
-  people.forEach(p => {
-    const personDiv = document.createElement("div");
-    personDiv.className = "person";
-
-    // top row: name, score, tag
-    const row = document.createElement("div");
-    row.className = "row";
-
-    const title = document.createElement("strong");
-    title.textContent = `${p.name} — ${p.score}%`;
-    row.appendChild(title);
-
-    const tag = document.createElement("span");
-    tag.className = "tag " + (p.focused ? "focus" : "active");
-    tag.textContent = p.focused ? "FOCUS" : (p.status === "paused" ? "PAUSED" : "ACTIVE");
-    row.appendChild(tag);
-
-    personDiv.appendChild(row);
-
-    // progress bar
-    const bar = document.createElement("div");
-    bar.className = "bar";
-    const fill = document.createElement("div");
-    fill.className = "fill";
-    fill.style.width = p.score + "%";
-    bar.appendChild(fill);
-    personDiv.appendChild(bar);
-
-    // buttons
-    const btns = document.createElement("div");
-    btns.className = "btns";
-    const mkbtn = (label, cls, fn) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = cls || "";
-      b.onclick = fn;
-      b.setAttribute("aria-label", label + " " + p.name);
-      return b;
-    };
-
-    btns.appendChild(mkbtn("-10", "small", ()=> adjust(p.name, -10)));
-    btns.appendChild(mkbtn("+10", "small", ()=> adjust(p.name, +10)));
-    btns.appendChild(mkbtn(p.focused ? "Unfocus" : "Focus", "small", ()=> toggleFocus(p.name)));
-    btns.appendChild(mkbtn(p.status === "paused" ? "Resume" : "Pause", "small", ()=> togglePause(p.name)));
-    btns.appendChild(mkbtn("Delete", "small", ()=> deletePerson(p.name)));
-
-    personDiv.appendChild(btns);
-    listEl.appendChild(personDiv);
-  });
-}
-
-/* Find person helper */
-function find(name) {
-  return people.find(x => x.name.toLowerCase() === name.toLowerCase());
-}
-
-/* Add or update person */
-function addPerson() {
-  const name = (nameInput.value || "").trim();
-  if (!name) return notify("Please enter a name");
-  let p = find(name);
-  if (!p) {
-    p = {
-      name,
-      score: 0,
-      status: "active",     // "active" | "paused"
-      focused: false,
-      createdAt: now(),
-      lastTickAt: now(),    // last time we applied decay or user update
-      focusedAt: null
-    };
-    people.push(p);
-    notify("Added " + name);
-  } else {
-    // update lastTickAt so we don't accidentally immediately decay
-    p.lastTickAt = now();
-    notify("Updated " + name);
-  }
-  nameInput.value = "";
-  save();
-  render();
-}
-
-/* Adjust score */
-function adjust(name, delta) {
-  const p = find(name);
-  if (!p) return;
-  p.score = clamp(p.score + delta);
-  p.lastTickAt = now();
-  save();
-  render();
-}
-
-/* Toggle pause/resume */
-function togglePause(name) {
-  const p = find(name);
-  if (!p) return;
-  p.status = p.status === "paused" ? "active" : "paused";
-  p.lastTickAt = now();
-  save();
-  render();
-}
-
-/* Toggle focus with limit enforcement */
-function toggleFocus(name) {
-  const p = find(name);
-  if (!p) return;
-
-  if (!p.focused) {
-    // we're about to set focus true -> enforce limit
-    const currentFocused = people.filter(x => x.focused);
-    if (currentFocused.length >= FOCUS_LIMIT) {
-      // remove the oldest focused (smallest focusedAt)
-      currentFocused.sort((a,b)=> (a.focusedAt || 0) - (b.focusedAt || 0));
-      const toRemove = currentFocused[0];
-      toRemove.focused = false;
-      toRemove.focusedAt = null;
-      notify("Focus limit reached — oldest focus removed");
-    }
-    p.focused = true;
-    p.focusedAt = now();
-  } else {
-    p.focused = false;
-    p.focusedAt = null;
-  }
-
-  p.lastTickAt = now();
-  save();
-  render();
-}
-
-/* Delete */
-function deletePerson(name) {
-  people = people.filter(x => x.name !== name);
-  save();
-  render();
-}
-
-/* Clear all */
-function clearAll() {
-  if (!confirm("Clear all people? This cannot be undone.")) return;
-  people = [];
-  save();
-  render();
-}
-
-/* DECAY logic:
-   - runDecay checks each person and computes how many DECAY intervals have passed since lastTickAt
-   - if person is focused or paused -> skip decay
-   - apply nTicks * DECAY_AMOUNT, update lastTickAt forward by nTicks * DECAY_HOURS
-*/
-function runDecayOnce() {
-  if (people.length === 0) return;
-
-  const msPerTick = DECAY_HOURS * 60 * 60 * 1000;
-  const t = now();
-  let changed = false;
-
-  people.forEach(p => {
-    if (p.focused || p.status === "paused") return; // skip
-    const elapsed = t - (p.lastTickAt || p.createdAt || 0);
-    if (elapsed < msPerTick) return;
-    const nTicks = Math.floor(elapsed / msPerTick);
-    if (nTicks <= 0) return;
-    p.score = clamp(p.score - (DECAY_AMOUNT * nTicks));
-    // advance lastTickAt by the number of ticks consumed
-    p.lastTickAt = (p.lastTickAt || p.createdAt || 0) + nTicks * msPerTick;
-    changed = true;
-  });
-
-  if (changed) {
-    save();
-    render();
-  }
-}
-
-/* Set a single safe interval that checks every minute (light on CPU).
-   The function runDecayOnce itself computes how many ticks to apply, so if
-   the page is closed for days, the next run applies the missing ticks at once.
-*/
-let decayInterval = null;
-function startAutoDecay() {
-  if (decayInterval) return;
-  // run once on start
-  runDecayOnce();
-  // then periodic check
-  decayInterval = setInterval(runDecayOnce, 60 * 1000); // every minute
-}
-
-/* Buttons */
-addBtn.addEventListener("click", addPerson);
-clearBtn.addEventListener("click", clearAll);
-decayTestBtn.addEventListener("click", () => { runDecayOnce(); notify("Decay test run"); });
-
-/* Keyboard: enter to add */
-nameInput.addEventListener("keydown", (e)=> { if (e.key === "Enter") addPerson(); });
-
-/* Init */
-render();
-startAutoDecay();
-
-/* Expose to console for debugging (optional) */
-window._rizz = {
-  people, save, runDecayOnce, startAutoDecay, DECAY_HOURS, DECAY_AMOUNT
 };
-</script>
-</body>
-</html>
+
+// safer remove / clear with confirmation
+const originalRemove = window.remove;
+window.remove = function(name){
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  setUIEnabled(false);
+  try { originalRemove(name); } finally { setTimeout(()=>setUIEnabled(true),120); }
+};
+
+const originalClearAll = window.clearAll;
+window.clearAll = function(){
+  if (!confirm("Clear all entries? This will erase local data.")) return;
+  setUIEnabled(false);
+  try { originalClearAll(); } finally { setTimeout(()=>setUIEnabled(true),120); }
+};
+
+// EXPORT / IMPORT functions (adds two small controls to the top)
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rizz-data.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importDataFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed)) throw new Error("Invalid file");
+      if (!confirm("Replace current data with imported data?")) return;
+      data = parsed.map(item => ({
+        name: String(item.name||'').trim(),
+        score: clamp(Number(item.score)||0),
+        status: item.status || "ACTIVE",
+        focusedAt: item.focusedAt || null,
+        lastUpdate: item.lastUpdate || now()
+      })).filter(p=>p.name);
+      save();
+      render();
+      alert("Import complete.");
+    } catch(e) {
+      alert("Import failed: " + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* --- add small export/import UI near top (if not present) --- */
+(function addExportImportUI(){
+  const ctrl = document.createElement('div');
+  ctrl.style.margin = '10px 0';
+  ctrl.innerHTML = `
+    <button id="exportBtn">Export JSON</button>
+    <input id="importFile" type="file" accept=".json" style="display:none" />
+    <button id="importBtn">Import JSON</button>
+  `;
+  const root = document.body;
+  root.insertBefore(ctrl, document.getElementById('list'));
+  document.getElementById('exportBtn').onclick = exportData;
+  document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = e => importDataFile(e.target.files[0]);
+})();
