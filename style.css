@@ -307,3 +307,174 @@ button {
     animation: none !important;
   }
 }
+/* ==============================
+   DASHBOARD — ALIVE, ROMANTIC, REAL
+   Replace/append this at the BOTTOM of style.css
+   (Keeps all dashboard words unchanged)
+   ============================== */
+
+/* tunable vars */
+:root{
+  --rizz-pink-1: rgba(255,105,180,0.22);
+  --rizz-pink-2: rgba(255,150,185,0.14);
+  --rizz-aura: rgba(255,105,180,0.30);
+  --rizz-shadow: rgba(0,0,0,0.6);
+  --rizz-accent: rgba(255,159,207,0.95);
+  --breath-dur: 7.2s;
+  --sweep-dur: 3.8s;
+  --particle-dur: 10s;
+}
+
+/* container */
+.dashboard {
+  position: relative;
+  overflow: hidden;                /* keep effects contained */
+  text-align: center;
+  border-radius: 18px;
+  padding: 20px 18px;
+  /* layered, natural background */
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255,140,185,0.06) 0%, transparent 28%),
+    radial-gradient(circle at 90% 80%, rgba(255,90,160,0.05) 0%, transparent 30%),
+    linear-gradient(180deg, rgba(16,14,18,0.95), rgba(13,11,13,0.98) 70%);
+  box-shadow:
+    0 24px 48px var(--rizz-shadow),
+    0 0 40px rgba(255,105,180,0.12) inset;
+  transform-origin: center;
+  will-change: transform, box-shadow;
+  transition: box-shadow .28s ease, transform .28s ease;
+  animation: dashboardBreath var(--breath-dur) ease-in-out infinite;
+}
+
+/* subtle inner glass sheen */
+.dashboard::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01) 30%, transparent 55%);
+  mix-blend-mode: overlay;
+  z-index: 1;
+}
+
+/* warm ambient aura */
+.dashboard::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  border-radius: 30%;
+  background: radial-gradient(circle at 20% 10%, var(--rizz-aura), transparent 30%),
+              radial-gradient(circle at 80% 90%, rgba(255,182,193,0.12), transparent 25%);
+  filter: blur(28px) saturate(1.02);
+  opacity: 0.85;
+  z-index: 0;
+  transform: scale(1);
+  animation: auraFloat calc(var(--breath-dur) * 1.2) ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+/* sweeping shimmer to add motion and life */
+.dashboard .gloss {
+  position: absolute;
+  top: -40%;
+  left: -40%;
+  width: 180%;
+  height: 180%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.06) 42%, rgba(255,255,255,0.00) 70%);
+  transform: rotate(-18deg);
+  z-index: 2;
+  pointer-events: none;
+  animation: glossSweep var(--sweep-dur) linear infinite;
+  mix-blend-mode: overlay;
+  opacity: 0.65;
+}
+
+/* tiny floating romantic particles (very low-key) */
+.dashboard .particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rizz-accent);
+  opacity: 0.14;
+  filter: blur(1px);
+  z-index: 0;
+  animation: particleFloat var(--particle-dur) linear infinite;
+}
+
+/* text clarity & stacking above effects */
+.dashboard > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* nicer heading and items */
+.dashboard h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+  color: #fff;
+}
+
+.dashboard .dash-item {
+  margin-top: 8px;
+  font-size: 15px;
+  color: #f6f6f8;
+  display: block;
+}
+
+.dashboard .dash-item span {
+  font-weight: 700;
+  color: var(--rizz-accent);
+}
+
+/* keyframes */
+@keyframes dashboardBreath {
+  0%   { transform: scale(1); box-shadow: 0 20px 40px rgba(0,0,0,0.58); }
+  40%  { transform: scale(1.01); box-shadow: 0 28px 54px rgba(0,0,0,0.62); }
+  70%  { transform: scale(1.007); box-shadow: 0 24px 44px rgba(0,0,0,0.60); }
+  100% { transform: scale(1); box-shadow: 0 20px 40px rgba(0,0,0,0.58); }
+}
+
+@keyframes auraFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0.85; }
+  50%  { transform: translateY(-8px) scale(1.02); opacity: 0.78; }
+  100% { transform: translateY(0) scale(1); opacity: 0.85; }
+}
+
+@keyframes glossSweep {
+  0%   { transform: translateX(-100%) rotate(-18deg); opacity: .0; }
+  10%  { opacity: .12; }
+  50%  { transform: translateX(20%) rotate(-18deg); opacity: .65; }
+  90%  { opacity: .12; }
+  100% { transform: translateX(120%) rotate(-18deg); opacity: .0; }
+}
+
+/* particle float variations (we randomize by inline style later in CSS-less way) */
+@keyframes particleFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0.12; }
+  25%  { transform: translateY(-8px) scale(1.15); opacity: 0.08; }
+  50%  { transform: translateY(-2px) scale(1); opacity: 0.12; }
+  75%  { transform: translateY(-10px) scale(0.9); opacity: 0.06; }
+  100% { transform: translateY(0) scale(1); opacity: 0.12; }
+}
+
+/* small responsive tuning */
+@media (max-width:420px){
+  .dashboard { padding: 16px 12px; }
+  .dashboard h3 { font-size: 16px; }
+  .dashboard .dash-item { font-size: 14px; }
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .dashboard,
+  .dashboard::after,
+  .dashboard .gloss,
+  .dashboard .particle {
+    animation: none !important;
+    transition: none !important;
+  }
+  .dashboard { transform: none; }
+}
