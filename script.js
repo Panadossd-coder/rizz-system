@@ -1,110 +1,87 @@
-document.addEventListener("DOMContentLoaded", () => {
+let people = [];
+let selectedStatus = null;
+let focus = 0;
 
-  const form = document.getElementById("addForm");
-  const list = document.getElementById("peopleList");
+const nameInput = document.getElementById("nameInput");
+const notesInput = document.getElementById("notesInput");
+const reminderInput = document.getElementById("reminderInput");
+const list = document.getElementById("list");
+const dashFocus = document.getElementById("dashFocus");
+const dashPause = document.getElementById("dashPause");
+const dashAction = document.getElementById("dashAction");
+const focusValue = document.getElementById("focusValue");
 
-  const dashFocus = document.getElementById("dashFocus");
-  const dashPause = document.getElementById("dashPause");
-  const dashAction = document.getElementById("dashAction");
+document.querySelectorAll(".status-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedStatus = btn.dataset.status;
+  });
+});
 
-  const statusBtns = document.querySelectorAll(".status-btn");
-  let selectedStatus = null;
+document.getElementById("plus").onclick = () => {
+  if (focus < 100) focus += 10;
+  focusValue.textContent = focus + "%";
+};
 
-  const focusValue = document.getElementById("focusValue");
-  let focus = 0;
+document.getElementById("minus").onclick = () => {
+  if (focus > 0) focus -= 10;
+  focusValue.textContent = focus + "%";
+};
 
-  function load() {
-    const data = JSON.parse(localStorage.getItem("rizz")) || [];
-    list.innerHTML = "";
-    data.forEach(addCard);
-    updateDashboard(data);
-  }
+document.getElementById("addForm").addEventListener("submit", e => {
+  e.preventDefault();
 
-  function save(data) {
-    localStorage.setItem("rizz", JSON.stringify(data));
-  }
+  if (!nameInput.value || !selectedStatus) return;
 
-  statusBtns.forEach(btn => {
-    btn.onclick = () => {
-      statusBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      selectedStatus = btn.dataset.status;
-    };
+  people.push({
+    name: nameInput.value,
+    status: selectedStatus,
+    focus,
+    notes: notesInput.value,
+    reminder: reminderInput.value
   });
 
-  document.getElementById("plus").onclick = () => {
-    focus = Math.min(100, focus + 10);
-    focusValue.textContent = focus + "%";
-  };
+  nameInput.value = "";
+  notesInput.value = "";
+  reminderInput.value = "";
+  focus = 0;
+  focusValue.textContent = "0%";
+  selectedStatus = null;
+  document.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
 
-  document.getElementById("minus").onclick = () => {
-    focus = Math.max(0, focus - 10);
-    focusValue.textContent = focus + "%";
-  };
+  render();
+});
 
-  form.onsubmit = e => {
-    e.preventDefault();
+function render() {
+  list.innerHTML = "";
 
-    const name = document.getElementById("name").value.trim();
-    if (!name || !selectedStatus) return;
+  if (people.length === 0) {
+    dashFocus.textContent = "—";
+    dashPause.textContent = "—";
+    dashAction.textContent = "Add someone to begin.";
+    return;
+  }
 
-    const entry = {
-      name,
-      status: selectedStatus,
-      focus,
-      notes: document.getElementById("notes").value,
-      reminder: document.getElementById("reminder").value
-    };
+  const focusPerson = people.reduce((a, b) => b.focus > a.focus ? b : a);
+  dashFocus.textContent = focusPerson.name;
+  dashPause.textContent = people.find(p => p.status === "pause")?.name || "—";
+  dashAction.textContent = focusPerson.focus >= 70 ? "High priority. Reach out." : "Keep it steady.";
 
-    const data = JSON.parse(localStorage.getItem("rizz")) || [];
-    data.push(entry);
-    save(data);
-
-    addCard(entry);
-    updateDashboard(data);
-
-    form.reset();
-    focus = 0;
-    focusValue.textContent = "0%";
-    selectedStatus = null;
-    statusBtns.forEach(b => b.classList.remove("active"));
-  };
-
-  function addCard(p) {
+  people.forEach((p, i) => {
     const div = document.createElement("div");
-    div.className = "card";
+    div.className = "person";
     div.innerHTML = `
       <strong>${p.name}</strong><br>
       ${p.status}<br>
       ${p.focus}% focus<br>
       ${p.reminder ? "⏰ " + p.reminder : ""}
-      <br><br>
-      <button>Remove</button>
+      <button class="remove">Remove</button>
     `;
-    div.querySelector("button").onclick = () => {
-      let data = JSON.parse(localStorage.getItem("rizz")) || [];
-      data = data.filter(x => x !== p);
-      save(data);
-      load();
+    div.querySelector(".remove").onclick = () => {
+      people.splice(i, 1);
+      render();
     };
     list.appendChild(div);
-  }
-
-  function updateDashboard(data) {
-    if (!data.length) {
-      dashFocus.textContent = "—";
-      dashPause.textContent = "—";
-      dashAction.textContent = "Add someone to begin.";
-      return;
-    }
-
-    const focusOne = [...data].sort((a,b)=>b.focus-a.focus)[0];
-    dashFocus.textContent = focusOne.name;
-    dashAction.textContent = focusOne.focus >= 70 ? "High priority. Reach out." : "Keep balance.";
-
-    const paused = data.find(p=>p.status==="pause");
-    dashPause.textContent = paused ? paused.name : "—";
-  }
-
-  load();
-});
+  });
+}
