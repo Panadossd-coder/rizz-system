@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rizz Web — Version 1.1</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+  <h1>Rizz Web</h1>
+  <p class="sub">Version 1.1 — Stable</p>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="card">
+    <p><strong>🎯 Focus:</strong> <span id="dashFocus">—</span></p>
+    <p><strong>⏸ Pause:</strong> <span id="dashPause">—</span></p>
+    <p><strong>🧠 Action:</strong> <span id="dashAction">Add someone to begin.</span></p>
+  </div>
+
+  <!-- FORM -->
+  <form id="addForm" class="card">
+    <input name="name" placeholder="Name" required>
+
+    <div class="status-row">
+      <button type="button" class="status-btn" data-status="crush">Crush</button>
+      <button type="button" class="status-btn" data-status="dating">Dating</button>
+      <button type="button" class="status-btn" data-status="pause">Pause</button>
+    </div>
+
+    <input type="hidden" name="status" value="crush">
+
+    <div class="focus-row">
+      <button type="button" id="minus">−</button>
+      <span id="focusValue">0%</span>
+      <button type="button" id="plus">+</button>
+    </div>
+
+    <input type="hidden" name="focus" value="0">
+
+    <textarea name="notes" placeholder="Notes"></textarea>
+    <input name="reminder" placeholder="Reminder (optional)">
+
+    <button type="submit">Add</button>
+  </form>
+
+  <!-- LIST -->
+  <div id="peopleList"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
