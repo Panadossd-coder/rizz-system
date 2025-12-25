@@ -33,11 +33,7 @@ h1 {
   padding: 16px;
   margin-bottom: 14px;
 }
-/* DIM LOW FOCUS */
-.person.dim {
-  opacity: 0.45;
-  filter: grayscale(40%);
-}
+
 
 .dashboard {
   border: 1px solid rgba(255,105,180,0.3);
