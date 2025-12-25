@@ -67,7 +67,7 @@ function render() {
 
   people.forEach((p,i)=>{
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = `card person ${p.focus <= 20 ? "dim" : ""}`;
 
     card.innerHTML = `
       <strong>${p.name}</strong><br>
