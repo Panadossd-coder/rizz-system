@@ -140,3 +140,10 @@ button {
   color: #9aa3ad;
   font-style: italic;
 }
+/* =========================
+   DIM LOW FOCUS CARDS
+   ========================= */
+.person.dim {
+  opacity: 0.45;
+  filter: grayscale(40%);
+}
