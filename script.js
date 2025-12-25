@@ -89,16 +89,16 @@ function updateDashboard(){
 /* ---------------- RENDER ---------------- */
 function render(){
   list.innerHTML = "";
+
   people.forEach((p,i)=>{
     const card = document.createElement("div");
-    // use dim class when focus <= 20
     card.className = `card person ${p.focus <= 20 ? "dim" : ""}`;
 
     card.innerHTML = `
       <strong>${p.name}</strong><br>
       <span class="sub">${p.status}</span>
 
-      <div class="focus-bar" aria-hidden="true">
+      <div class="focus-bar">
         <div class="focus-fill" style="width:${p.focus}%"></div>
       </div>
       <div class="sub">${p.focus}% focus</div>
@@ -107,10 +107,16 @@ function render(){
       <div class="advice">${adviceFor(p.focus)}</div>
 
       <p>${p.notes || ""}</p>
-      <button onclick="removePerson(${i})">Remove</button>
+
+      <div class="card-actions">
+        <button onclick="editStatus(${i})">Edit Status</button>
+        <button onclick="removePerson(${i})">Remove</button>
+      </div>
     `;
+
     list.appendChild(card);
   });
+
   updateDashboard();
 }
 
