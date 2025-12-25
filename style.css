@@ -122,3 +122,12 @@ input, textarea {
   border-radius: 10px;
   border: none;
 }
+/* iOS SAFARI FIX */
+body {
+  padding-bottom: 120px;
+}
+
+/* Ensure Add button is never under Safari bar */
+.add-btn {
+  margin-bottom: 80px;
+}
