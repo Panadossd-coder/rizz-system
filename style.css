@@ -224,3 +224,15 @@ button { border-radius: 12px; font-weight: 700; letter-spacing: .2px; }
   .dashboard h3 { font-size: 16px; }
   .dashboard .dash-item { font-size: 14px; }
 }
+/* =========================
+   CARD ACTION BUTTONS
+   ========================= */
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.card-actions button {
+  flex: 1;
+}
