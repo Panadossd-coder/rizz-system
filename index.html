@@ -1,54 +1,62 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
   <title>Rizz Web — Version 1.1</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="app">
 
-<div class="app">
-  <h1>Rizz Web</h1>
-  <p class="sub">Version 1.1 — Stable</p>
+    <h1>Rizz Web</h1>
+    <div class="sub">Version 1.1 — Button Control</div>
 
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="card">
-    <p><strong>🎯 Focus:</strong> <span id="dashFocus">—</span></p>
-    <p><strong>⏸ Pause:</strong> <span id="dashPause">—</span></p>
-    <p><strong>🧠 Action:</strong> <span id="dashAction">Add someone to begin.</span></p>
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card dashboard">
+      <h3>💘 Today’s Dashboard</h3>
+      <div class="dash-item">🎯 Focus: <span id="dashFocus">—</span></div>
+      <div class="dash-item">⏸ Pause: <span id="dashPause">—</span></div>
+      <div class="dash-item">🧠 Action: <span id="dashAction">—</span></div>
+    </div>
+
+    <div class="card status">✅ Style loaded successfully</div>
+
+    <!-- FORM -->
+    <form id="addForm" class="card">
+
+      <input name="name" placeholder="Name" required />
+
+      <div class="label">Status</div>
+      <div class="status-buttons">
+        <button type="button" data-status="crush">💘 Crush</button>
+        <button type="button" data-status="dating">💞 Dating</button>
+        <button type="button" data-status="pause">⏸ Pause</button>
+      </div>
+
+      <!-- hidden status input -->
+      <input type="hidden" name="status" value="crush" />
+
+      <div class="label">Set Focus</div>
+      <div class="focus-control">
+        <button type="button" id="minus">−</button>
+        <span id="focusValue">0%</span>
+        <button type="button" id="plus">+</button>
+      </div>
+
+      <!-- hidden focus input -->
+      <input type="hidden" name="focus" value="0" />
+
+      <textarea name="notes" placeholder="Notes"></textarea>
+      <input name="reminder" placeholder="Reminder (e.g. Call tonight)" />
+
+      <button type="submit">Add</button>
+    </form>
+
+    <div id="peopleList"></div>
+
   </div>
 
-  <!-- FORM -->
-  <form id="addForm" class="card">
-    <input name="name" placeholder="Name" required>
-
-    <div class="status-row">
-      <button type="button" class="status-btn" data-status="crush">Crush</button>
-      <button type="button" class="status-btn" data-status="dating">Dating</button>
-      <button type="button" class="status-btn" data-status="pause">Pause</button>
-    </div>
-
-    <input type="hidden" name="status" value="crush">
-
-    <div class="focus-row">
-      <button type="button" id="minus">−</button>
-      <span id="focusValue">0%</span>
-      <button type="button" id="plus">+</button>
-    </div>
-
-    <input type="hidden" name="focus" value="0">
-
-    <textarea name="notes" placeholder="Notes"></textarea>
-    <input name="reminder" placeholder="Reminder (optional)">
-
-    <button type="submit">Add</button>
-  </form>
-
-  <!-- LIST -->
-  <div id="peopleList"></div>
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
