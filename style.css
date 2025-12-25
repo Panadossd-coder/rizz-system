@@ -1,98 +1,48 @@
-* { box-sizing: border-box; }
+/* ================================
+   RIZZ WEB — GLOBAL RESET
+================================ */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background: #000;
   color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-.app { max-width: 640px; margin: 0 auto; padding: 20px; }
-
-h1 { font-size: 28px; margin: 0; }
-.sub { color: #9aa3ad; margin-bottom: 12px; }
-
-.card {
-  background: #0f1112;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset;
+  font-family: -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif;
 }
 
-#dashboard h2 { margin: 0 0 8px 0; font-size: 20px; }
-.dash-item { margin-top: 8px; font-size: 15px; }
-.dash-label { color: #9aa3ad; margin-right: 6px; }
-
-.status-ok { color: #00d08a; font-weight: 600; padding: 12px; }
-
-input, textarea, button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  border: none;
-  font-size: 15px;
-  outline: none;
-}
-textarea { min-height: 80px; resize: vertical; }
-
-.status-buttons { display:flex; gap:10px; margin-top:8px; }
-.status-btn {
-  background:#17191a;
-  color:#cfe6ff;
-  border-radius:10px;
-  padding: 12px;
-  flex:1;
-  cursor:pointer;
-  border: 1px solid rgba(255,255,255,0.03);
-}
-.status-btn.selected {
-  background: linear-gradient(180deg,#2b1527,#4d1b2f);
-  color: #ffd1e6;
-  box-shadow: 0 6px 18px rgba(255, 40, 120, 0.12);
-  transform: translateY(-1px);
-}
-
-.label { margin-top:12px; font-size:14px; color:#cfd8dc; }
-
-.focus-controls { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; }
-.pink-btn {
-  width:64px; height:64px; border-radius:14px;
-  background: linear-gradient(180deg,#ff8ab8,#ff6a9d);
-  color:#fff; font-size:30px; border:none; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-}
-.focus-display { font-weight:700; color:#ffc0d6; font-size:20px; text-align:center; flex:1; }
-
-.add-btn {
-  background: linear-gradient(180deg,#00d08a,#00b86f);
-  color: #000; font-weight:700; padding:14px; margin-top:12px;
-}
-
-#peopleList .card { margin-top: 10px; position:relative; }
-.card .sub { color:#9aa3ad; display:block; margin-top:6px; }
-.focus-wrap { margin-top:12px; }
-.focus-bar { height:8px; background:#1c1f22; border-radius:6px; overflow:hidden; }
-.focus-fill { height:100%; background:#00d08a; width:0%; transition:width 400ms ease; }
-.card.low-focus { opacity: 0.35; }
-.card.high-focus { border: 1px solid #00d08a; }
-.reminder { margin-top:10px; padding:10px; border-left:4px solid #ffb020; background: rgba(255,176,32,0.07); color:#ffd8b0; border-radius:6px; }
-.urgent { border: 1px solid #ffb020; box-shadow: 0 0 0 1px rgba(255,176,32,0.25) inset; }
-.advice { margin-top:10px; font-size:13px; color:#9aa3ad; font-style:italic; }
-
-button.remove { background:#222; color:#fff; padding:12px; border-radius:10px; margin-top:12px; border:1px solid rgba(255,255,255,0.03); cursor:pointer; }
-
-@media (min-width:520px) {
-  .status-btn { padding:14px; }
-  .pink-btn { width:70px; height:70px; font-size:34px; border-radius:16px; }
-}
 /* ================================
-   RIZZ WEB v2.1.1 — VISUAL POLISH
-   (NO LOGIC CHANGES)
+   APP CONTAINER
 ================================ */
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-/* Romantic dashboard glow */
+/* ================================
+   HEADERS
+================================ */
+h1 {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.sub {
+  color: #9aa3ad;
+  font-size: 14px;
+}
+
+/* ================================
+   DASHBOARD (ROMANTIC GLOW)
+================================ */
 #dashboard {
-  position: relative;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #2a0f1f, #0f1112);
   box-shadow:
     0 0 25px rgba(255,105,180,0.15),
@@ -113,13 +63,114 @@ button.remove { background:#222; color:#fff; padding:12px; border-radius:10px; m
   }
 }
 
-/* Smooth dashboard text transitions */
+.dash-item {
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+.dash-label {
+  color: #9aa3ad;
+  margin-right: 6px;
+}
+
 #dashboard span {
   transition: all 0.4s ease;
 }
 
-/* Card entrance animation */
+/* ================================
+   FORM ELEMENTS
+================================ */
+input,
+textarea,
+button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 15px;
+}
+
+input,
+textarea {
+  background: #fff;
+  color: #000;
+}
+
+button {
+  background: #00d08a;
+  color: #000;
+  font-weight: 700;
+}
+
+/* ================================
+   STATUS BUTTONS
+================================ */
+.status-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.status-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: #1c1f22;
+  color: #fff;
+  text-align: center;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.status-btn.selected {
+  background: linear-gradient(135deg, #ff5fa2, #ff2d7a);
+  box-shadow:
+    0 0 12px rgba(255,105,180,0.6),
+    0 0 25px rgba(255,20,147,0.3);
+}
+
+/* ================================
+   FOCUS CONTROLS
+================================ */
+.focus-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.focus-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff6aa2, #ff3b85);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.focus-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 0 15px rgba(255,105,180,0.4);
+}
+
+.focus-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff9ac6;
+}
+
+/* ================================
+   PERSON CARDS
+================================ */
 .card {
+  background: #0f1112;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
   animation: cardIn 0.4s ease forwards;
 }
 
@@ -134,21 +185,74 @@ button.remove { background:#222; color:#fff; padding:12px; border-radius:10px; m
   }
 }
 
-/* Focus + / - button feedback */
-.focus-btn {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+.card.low-focus {
+  opacity: 0.45;
 }
 
-.focus-btn:active {
-  transform: scale(0.92);
-  box-shadow: 0 0 15px rgba(255,105,180,0.4);
+.card.high-focus {
+  border: 1px solid #00d08a;
+  box-shadow: 0 0 12px rgba(0,208,138,0.3);
 }
 
-/* Status button selected glow */
-.status-btn.selected {
-  background: linear-gradient(135deg, #ff5fa2, #ff2d7a);
+/* ================================
+   FOCUS BAR
+================================ */
+.focus-wrap {
+  margin-top: 10px;
+}
+
+.focus-bar {
+  height: 8px;
+  background: #1c1f22;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.focus-fill {
+  height: 100%;
+  background: #00d08a;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* ================================
+   REMINDERS & ADVICE
+================================ */
+.reminder {
+  margin-top: 10px;
+  padding: 8px;
+  border-left: 3px solid #ffb020;
+  background: rgba(255,176,32,0.08);
+  font-size: 13px;
+}
+
+.has-reminder {
+  box-shadow: 0 0 0 1px rgba(255,176,32,0.4);
+}
+
+.urgent {
+  border: 1px solid #ffb020;
+  box-shadow: 0 0 0 1px rgba(255,176,32,0.3);
+}
+
+.urgent .reminder {
+  color: #ffb020;
+  font-weight: 600;
+}
+
+.advice {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #9aa3ad;
+  font-style: italic;
+}
+
+/* ================================
+   REMOVE BUTTON
+================================ */
+.card button {
+  margin-top: 12px;
+  background: #2a2a2a;
   color: #fff;
-  box-shadow:
-    0 0 12px rgba(255,105,180,0.6),
-    0 0 25px rgba(255,20,147,0.3);
+  border-radius: 10px;
 }
