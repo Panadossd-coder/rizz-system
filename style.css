@@ -85,3 +85,70 @@ button.remove { background:#222; color:#fff; padding:12px; border-radius:10px; m
   .status-btn { padding:14px; }
   .pink-btn { width:70px; height:70px; font-size:34px; border-radius:16px; }
 }
+/* ================================
+   RIZZ WEB v2.1.1 — VISUAL POLISH
+   (NO LOGIC CHANGES)
+================================ */
+
+/* Romantic dashboard glow */
+#dashboard {
+  position: relative;
+  background: linear-gradient(135deg, #2a0f1f, #0f1112);
+  box-shadow:
+    0 0 25px rgba(255,105,180,0.15),
+    0 0 60px rgba(255,20,147,0.08);
+  animation: dashboardGlow 6s ease-in-out infinite;
+}
+
+@keyframes dashboardGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 25px rgba(255,105,180,0.15),
+      0 0 60px rgba(255,20,147,0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(255,105,180,0.25),
+      0 0 80px rgba(255,20,147,0.15);
+  }
+}
+
+/* Smooth dashboard text transitions */
+#dashboard span {
+  transition: all 0.4s ease;
+}
+
+/* Card entrance animation */
+.card {
+  animation: cardIn 0.4s ease forwards;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Focus + / - button feedback */
+.focus-btn {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.focus-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 0 15px rgba(255,105,180,0.4);
+}
+
+/* Status button selected glow */
+.status-btn.selected {
+  background: linear-gradient(135deg, #ff5fa2, #ff2d7a);
+  color: #fff;
+  box-shadow:
+    0 0 12px rgba(255,105,180,0.6),
+    0 0 25px rgba(255,20,147,0.3);
+}
