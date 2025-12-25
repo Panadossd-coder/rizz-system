@@ -1,5 +1,27 @@
+/* =========================
+   BUTTON CLICK SOUND
+   ========================= */
+const clickSound = document.getElementById("clickSound");
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn || !clickSound) return;
+  try {
+    clickSound.currentTime = 0;
+    clickSound.volume = 0.35;
+    clickSound.play().catch(() => {});
+  } catch (err) {}
+});
+
+/* =========================
+   CORE APP LOGIC
+   ========================= */
 const form = document.getElementById("addForm");
 const list = document.getElementById("peopleList");
+
+const dashFocus = document.getElementById("dashFocus");
+const dashPause = document.getElementById("dashPause");
+const dashAction = document.getElementById("dashAction");
 
 const focusValueEl = document.getElementById("focusValue");
 const statusInput = form.querySelector('input[name="status"]');
@@ -20,7 +42,8 @@ document.querySelectorAll(".status-buttons button").forEach(btn => {
 });
 
 // default active
-document.querySelector('.status-buttons button[data-status="crush"]').classList.add("active");
+const defaultStatusBtn = document.querySelector('.status-buttons button[data-status="crush"]');
+if (defaultStatusBtn) defaultStatusBtn.classList.add("active");
 
 /* ---------------- FOCUS CONTROLS ---------------- */
 document.getElementById("plus").onclick = () => {
@@ -38,70 +61,73 @@ function updateFocus() {
   focusInput.value = focus;
 }
 
-/* ---------------- SAVE ---------------- */
-function save() {
-  localStorage.setItem("rizz_people", JSON.stringify(people));
+/* ---------------- ADVICE ---------------- */
+function adviceFor(f){
+  if(f >= 80) return "High priority. Reach out or plan a meet.";
+  if(f >= 60) return "Good momentum. Stay consistent.";
+  if(f >= 30) return "Keep it steady. No pressure.";
+  return "Low priority. Do not over-invest.";
 }
 
 /* ---------------- DASHBOARD ---------------- */
-function updateDashboard() {
-  if (people.length === 0) {
+function updateDashboard(){
+  if(!people.length){
     dashFocus.textContent = "—";
     dashPause.textContent = "—";
     dashAction.textContent = "Add someone to begin.";
     return;
   }
-
   const sorted = [...people].sort((a,b)=>b.focus-a.focus);
-  const focusP = sorted.find(p=>p.focus>=70);
-  const pauseP = sorted.find(p=>p.status==="pause");
+  const focusP = sorted[0];
+  const pauseP = people.find(p=>p.status==="pause");
 
-  dashFocus.textContent = focusP ? focusP.name : "No high focus";
+  dashFocus.textContent = focusP ? focusP.name : "—";
   dashPause.textContent = pauseP ? pauseP.name : "—";
-  dashAction.textContent = focusP ? "Reach out or plan a meet." : "Maintain balance.";
+  dashAction.textContent = adviceFor(focusP.focus);
 }
 
 /* ---------------- RENDER ---------------- */
-function render() {
+function render(){
   list.innerHTML = "";
-
   people.forEach((p,i)=>{
     const card = document.createElement("div");
+    // use dim class when focus <= 20
     card.className = `card person ${p.focus <= 20 ? "dim" : ""}`;
 
     card.innerHTML = `
       <strong>${p.name}</strong><br>
       <span class="sub">${p.status}</span>
 
-      <div class="focus-bar">
+      <div class="focus-bar" aria-hidden="true">
         <div class="focus-fill" style="width:${p.focus}%"></div>
       </div>
       <div class="sub">${p.focus}% focus</div>
 
       ${p.reminder ? `<div class="reminder">⏰ ${p.reminder}</div>` : ""}
-      <div class="advice">Keep it steady. No pressure.</div>
+      <div class="advice">${adviceFor(p.focus)}</div>
 
       <p>${p.notes || ""}</p>
       <button onclick="removePerson(${i})">Remove</button>
     `;
-
     list.appendChild(card);
   });
-
   updateDashboard();
 }
 
 /* ---------------- REMOVE ---------------- */
-function removePerson(i) {
+function removePerson(i){
   people.splice(i,1);
-  save();
-  render();
+  save(); render();
+}
+
+/* ---------------- SAVE ---------------- */
+function save(){
+  localStorage.setItem("rizz_people", JSON.stringify(people));
 }
 
 /* ---------------- ADD ---------------- */
 form.addEventListener("submit", e=>{
   e.preventDefault();
-
   const name = form.name.value.trim();
   if (!name) return;
 
@@ -113,18 +139,19 @@ form.addEventListener("submit", e=>{
     reminder: form.reminder.value.trim()
   });
 
-  save();
-  render();
+  save(); render();
 
-  // RESET (THIS IS THE EXACT PLACE)
+  // RESET
   form.reset();
   focus = 0;
   updateFocus();
   statusInput.value = "crush";
   document.querySelectorAll(".status-buttons button")
     .forEach(b=>b.classList.remove("active"));
-  document.querySelector('.status-buttons button[data-status="crush"]').classList.add("active");
+  const defBtn = document.querySelector('.status-buttons button[data-status="crush"]');
+  if(defBtn) defBtn.classList.add("active");
 });
 
 /* INIT */
+updateFocus();
 render();
