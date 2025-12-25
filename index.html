@@ -1,50 +1,104 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rizz Web — Version 2.1</title>
-  <link rel="stylesheet" href="style.css?v=211">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rizz Web</title>
+
+  <!-- STYLE -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <div class="app">
+
+    <!-- HEADER -->
     <h1>Rizz Web</h1>
     <div class="sub">Version 2.1 — Focus Decay</div>
 
-    <div id="dashboard" class="card">
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card dashboard-glow">
       <h2>💘 Today's Dashboard</h2>
-      <div class="dash-item"><span class="dash-label">🎯 Focus:</span> <span id="dashFocus">—</span></div>
-      <div class="dash-item"><span class="dash-label">⏸️ Pause:</span> <span id="dashPause">—</span></div>
-      <div class="dash-item"><span class="dash-label">🧠 Action:</span> <span id="dashAction">—</span></div>
+
+      <div class="dash-item">
+        <span class="dash-label">🎯 Focus:</span>
+        <span id="dashFocus">—</span>
+      </div>
+
+      <div class="dash-item">
+        <span class="dash-label">⏸ Pause:</span>
+        <span id="dashPause">—</span>
+      </div>
+
+      <div class="dash-item">
+        <span class="dash-label">🧠 Action:</span>
+        <span id="dashAction">Add someone to begin.</span>
+      </div>
     </div>
 
-    <div class="card status-ok" id="styleStatus">✅ Version 2.1 running</div>
+    <!-- STATUS MESSAGE -->
+    <div class="card sub">
+      ✅ Version 2.1 running
+    </div>
 
+    <!-- ADD FORM -->
     <form id="addForm" class="card">
-      <input name="name" placeholder="Name" autocomplete="off" required>
 
-      <div class="label">Status</div>
-      <div id="statusBtns" class="status-buttons">
-        <button type="button" data-value="crush" class="status-btn">💘 Crush</button>
-        <button type="button" data-value="dating" class="status-btn">💞 Dating</button>
-        <button type="button" data-value="pause" class="status-btn">⏸ Pause</button>
+      <!-- NAME -->
+      <input
+        type="text"
+        name="name"
+        placeholder="Name"
+        autocomplete="off"
+        required
+      />
+
+      <!-- STATUS -->
+      <div class="section-label">Status</div>
+      <div class="status-row">
+        <button type="button" class="status-btn" data-status="crush">💘 Crush</button>
+        <button type="button" class="status-btn" data-status="dating">💖 Dating</button>
+        <button type="button" class="status-btn" data-status="pause">⏸ Pause</button>
       </div>
 
-      <div class="label">Set Focus</div>
+      <!-- HIDDEN STATUS INPUT -->
+      <input type="hidden" name="status" value="crush" />
+
+      <!-- FOCUS -->
+      <div class="section-label">Set Focus</div>
       <div class="focus-controls">
-        <button type="button" id="focusMinus" class="pink-btn">−</button>
-        <div id="focusDisplay" class="focus-display">0%</div>
-        <button type="button" id="focusPlus" class="pink-btn">+</button>
+        <button type="button" id="focusMinus" class="focus-btn">−</button>
+        <div id="focusValue" class="focus-value">0%</div>
+        <button type="button" id="focusPlus" class="focus-btn">+</button>
       </div>
 
-      <textarea name="notes" placeholder="Notes"></textarea>
-      <input name="reminder" placeholder="Reminder (e.g. Call tonight)">
-      <button type="submit" class="add-btn">Add</button>
+      <!-- HIDDEN FOCUS INPUT -->
+      <input type="hidden" name="focus" value="0" />
+
+      <!-- NOTES -->
+      <textarea
+        name="notes"
+        placeholder="Notes"
+        rows="3"
+      ></textarea>
+
+      <!-- REMINDER -->
+      <input
+        type="text"
+        name="reminder"
+        placeholder="Reminder (e.g. Call tonight)"
+      />
+
+      <!-- ADD BUTTON -->
+      <button type="submit">Add</button>
     </form>
 
+    <!-- PEOPLE LIST -->
     <div id="peopleList"></div>
+
   </div>
 
+  <!-- SCRIPT -->
   <script src="script.js"></script>
 </body>
 </html>
