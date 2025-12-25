@@ -4,52 +4,233 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Rizz Web — Version 2.1</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- CACHE BUST -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <style>
+    body{
+      margin:0;
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    }
+    .app{max-width:420px;margin:auto;padding:20px}
+    h1{margin:0}
+    .sub{opacity:.6;margin-bottom:12px}
+
+    .card{
+      background:#0f1112;
+      border-radius:18px;
+      padding:16px;
+      margin-bottom:16px;
+    }
+
+    .dashboard-glow{
+      background:radial-gradient(circle at top,#ff2f92 0%,#160014 60%);
+      box-shadow:0 0 40px rgba(255,60,150,.35);
+    }
+
+    .dash-item{margin:6px 0}
+    .dash-label{opacity:.7}
+
+    .notice{
+      background:#0b2b17;
+      padding:10px;
+      border-radius:12px;
+      margin-bottom:12px;
+    }
+
+    input,textarea{
+      width:100%;
+      padding:14px;
+      border-radius:14px;
+      border:none;
+      margin-bottom:12px;
+      font-size:16px;
+    }
+
+    .section-label{opacity:.7;margin:10px 0 6px}
+
+    .status-row{
+      display:flex;
+      gap:10px;
+      margin-bottom:14px;
+    }
+
+    .status-btn{
+      flex:1;
+      padding:12px;
+      border-radius:14px;
+      border:none;
+      background:#222;
+      color:#fff;
+      font-size:15px;
+    }
+
+    .status-btn.active{
+      background:#ff4da6;
+      box-shadow:0 0 18px rgba(255,77,166,.6);
+    }
+
+    .focus-controls{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:14px;
+    }
+
+    .focus-btn{
+      width:64px;
+      height:64px;
+      border-radius:18px;
+      border:none;
+      background:#ff7bbd;
+      color:#000;
+      font-size:30px;
+    }
+
+    .focus-value{
+      font-size:26px;
+      font-weight:700;
+    }
+
+    #addBtn{
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      background:#00d084;
+      color:#000;
+      font-size:18px;
+      font-weight:700;
+    }
+
+    .person{
+      border:2px solid #00d084;
+      border-radius:18px;
+      padding:14px;
+      margin-top:12px;
+    }
+
+    .bar{
+      height:8px;
+      background:#333;
+      border-radius:6px;
+      overflow:hidden;
+      margin:8px 0;
+    }
+
+    .bar span{
+      display:block;
+      height:100%;
+      background:#00d084;
+    }
+
+    .remove{
+      margin-top:10px;
+      width:100%;
+      padding:10px;
+      border-radius:12px;
+      border:none;
+      background:#222;
+      color:#fff;
+    }
+  </style>
 </head>
+
 <body>
-  <main class="app">
-    <h1>Rizz Web</h1>
-    <div class="sub">Version 2.1 — Focus Decay</div>
+<main class="app">
+  <h1>Rizz Web</h1>
+  <div class="sub">Version 2.1 — Focus Decay</div>
 
-    <section id="dashboard" class="card dashboard-glow">
-      <h2>💘 Today's Dashboard</h2>
-      <div class="dash-row">
-        <div class="dash-item"><span class="dash-label">🎯 Focus:</span> <span id="dashFocus">—</span></div>
-        <div class="dash-item"><span class="dash-label">⏸️ Pause:</span> <span id="dashPause">—</span></div>
-        <div class="dash-item"><span class="dash-label">🧠 Action:</span> <span id="dashAction">Add someone to begin.</span></div>
-      </div>
-    </section>
+  <section class="card dashboard-glow">
+    <h2>💘 Today's Dashboard</h2>
+    <div class="dash-item">🎯 Focus: <span id="dashFocus">—</span></div>
+    <div class="dash-item">⏸️ Pause: <span id="dashPause">—</span></div>
+    <div class="dash-item">🧠 Action: <span id="dashAction">Add someone to begin.</span></div>
+  </section>
 
-    <div id="statusBox" class="card">
-      <div class="notice">✅ <strong id="versionNote">Version 2.1 running</strong></div>
+  <div class="card">
+    <div class="notice">✅ <strong id="versionNote">Version 2.1 running (fresh)</strong></div>
 
-      <form id="addForm" autocomplete="off" novalidate>
-        <input id="name" name="name" placeholder="Name" />
+    <input id="name" placeholder="Name">
 
-        <div class="section-label">Status</div>
-        <div class="status-row" role="group" aria-label="status buttons">
-          <button type="button" class="status-btn" data-status="crush">💘 Crush</button>
-          <button type="button" class="status-btn" data-status="dating">💞 Dating</button>
-          <button type="button" class="status-btn" data-status="pause">⏸️ Pause</button>
-        </div>
-
-        <div class="section-label">Set Focus</div>
-        <div class="focus-controls">
-          <button type="button" id="focusMinus" class="focus-btn">−</button>
-          <div class="focus-value" id="focusValue">0%</div>
-          <button type="button" id="focusPlus" class="focus-btn">+</button>
-        </div>
-
-        <textarea id="notes" name="notes" rows="4" placeholder="Notes"></textarea>
-        <input id="reminder" name="reminder" placeholder="Reminder (e.g. Call tonight)" />
-
-        <button type="submit" id="addBtn">Add</button>
-      </form>
+    <div class="section-label">Status</div>
+    <div class="status-row">
+      <button class="status-btn" data-status="crush">💘 Crush</button>
+      <button class="status-btn" data-status="dating">💞 Dating</button>
+      <button class="status-btn" data-status="pause">⏸️ Pause</button>
     </div>
 
-    <section id="peopleList" aria-live="polite"></section>
-  </main>
+    <div class="section-label">Set Focus</div>
+    <div class="focus-controls">
+      <button class="focus-btn" id="minus">−</button>
+      <div class="focus-value" id="focusVal">0%</div>
+      <button class="focus-btn" id="plus">+</button>
+    </div>
 
-  <script src="script.js"></script>
+    <textarea id="notes" placeholder="Notes"></textarea>
+    <input id="reminder" placeholder="Reminder (e.g. Call tonight)">
+    <button id="addBtn">Add</button>
+  </div>
+
+  <section id="list"></section>
+</main>
+
+<script>
+console.log("✅ Rizz Web v2.1.1 script loaded");
+
+let status = null;
+let focus = 0;
+const people = [];
+
+document.querySelectorAll(".status-btn").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll(".status-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    status = btn.dataset.status;
+  };
+});
+
+minus.onclick=()=>{focus=Math.max(0,focus-10);focusVal.textContent=focus+"%";}
+plus.onclick=()=>{focus=Math.min(100,focus+10);focusVal.textContent=focus+"%";}
+
+addBtn.onclick=()=>{
+  const name=nameInput.value.trim();
+  if(!name||!status) return alert("Add name & status");
+  people.push({name,status,focus});
+  render();
+  nameInput.value="";
+  notes.value="";
+  reminder.value="";
+  focus=0;
+  focusVal.textContent="0%";
+  document.querySelectorAll(".status-btn").forEach(b=>b.classList.remove("active"));
+};
+
+function render(){
+  list.innerHTML="";
+  let top=people.reduce((a,b)=>b.focus>a.focus?b:a,people[0]);
+  dashFocus.textContent=top?.name||"—";
+  dashPause.textContent=people.find(p=>p.status==="pause")?.name||"—";
+  dashAction.textContent=top?.focus>=70?"High priority. Call or see them soon.":"Maintain balance.";
+
+  people.forEach((p,i)=>{
+    const d=document.createElement("div");
+    d.className="person";
+    d.innerHTML=`
+      <strong>${p.name}</strong><br>${p.status}
+      <div class="bar"><span style="width:${p.focus}%"></span></div>
+      ${p.focus}% focus
+      <button class="remove">Remove</button>
+    `;
+    d.querySelector("button").onclick=()=>{people.splice(i,1);render();}
+    list.appendChild(d);
+  });
+}
+</script>
 </body>
 </html>
