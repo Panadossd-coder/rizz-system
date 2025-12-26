@@ -12,7 +12,6 @@
     <h1>Rizz Web</h1>
     <div class="sub">Version 2 — Smart Focus</div>
 
-    <!-- DASHBOARD -->
     <div id="dashboard" class="card dashboard">
       <h3>💘 Today’s Dashboard</h3>
       <div class="dash-item">🎯 Focus: <span id="dashFocus">—</span></div>
@@ -22,7 +21,6 @@
 
     <div class="card status">✅ Version 2 running</div>
 
-    <!-- FORM -->
     <form id="addForm" class="card">
       <input name="name" placeholder="Name" required />
 
@@ -53,7 +51,6 @@
     <div id="peopleList"></div>
   </div>
 
-  <!-- click sound -->
   <audio id="clickSound" src="click.mp3" preload="auto"></audio>
 
   <!-- EDIT MODAL -->
@@ -81,6 +78,13 @@
 
   <script src="script.js"></script>
 
+  <script>
+  /* ONE-TIME GITHUB CACHE REFRESH */
+  if (!sessionStorage.getItem("rizz_refreshed")) {
+    sessionStorage.setItem("rizz_refreshed", "true");
+    location.reload();
+  }
+  </script>
 
 </body>
 </html>
