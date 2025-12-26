@@ -410,3 +410,45 @@ button[type="submit"]:active,
     animation: none !important;
   }
 }
+/* =========================
+   DASHBOARD TEXT ALIGNMENT FIX
+   (left-aligned, premium spacing)
+   ========================= */
+
+.dashboard {
+  text-align: left;            /* 🔑 main fix */
+}
+
+/* title stays strong but aligned */
+.dashboard h3 {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+/* dashboard rows */
+.dashboard .dash-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* label part (emoji + text) */
+.dashboard .dash-item {
+  color: #eaeaec;
+}
+
+/* value part */
+.dashboard .dash-item span {
+  margin-left: 4px;
+  font-weight: 700;
+  color: #ff9fcf;
+}
+
+/* optional: tighten on small screens */
+@media (max-width: 420px) {
+  .dashboard .dash-item {
+    font-size: 14px;
+  }
+}
