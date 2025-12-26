@@ -1,6 +1,5 @@
 /* script.js — Rizz Web v2
-   Includes Smart Focus Engine (decay + lastTouched) — minimal safe upgrade
-   Replace your existing script.js with this file.
+   Includes Smart Focus Engine (decay + lastTouched) and Reminder Engine (reminderTime + reminder-due)
 */
 
 /* =========================
@@ -36,29 +35,24 @@ let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
 
 /* =========================
    SMART FOCUS — Data Normalization
-   (backwards compatible)
    ========================= */
 function normalizePeopleData() {
   const now = Date.now();
   people.forEach(p => {
-    // ensure lastTouched exists
     if (!p.lastTouched) {
       p.lastTouched = now;
     }
-    // ensure focus is numeric
     if (typeof p.focus !== "number") {
       p.focus = parseInt(p.focus, 10) || 0;
     }
-    // safety: clamp focus 0-100
     p.focus = Math.max(0, Math.min(100, p.focus));
   });
 }
 
 /* =========================
    SMART FOCUS ENGINE
-   - decay: -5% per 24h of no interaction (only when saving counts)
-   - no decay for status === "pause"
-   - resets lastTouched after decay applied
+   - decay: -5% per 24h
+   - no decay for "pause"
    ========================= */
 function runSmartFocusEngine() {
   const now = Date.now();
@@ -66,7 +60,7 @@ function runSmartFocusEngine() {
   let changed = false;
 
   people.forEach(p => {
-    if (p.status === "pause") return; // no decay for paused
+    if (p.status === "pause") return;
 
     const elapsed = now - (p.lastTouched || now);
     if (elapsed < DAY) return;
@@ -74,21 +68,27 @@ function runSmartFocusEngine() {
     const days = Math.floor(elapsed / DAY);
     if (days <= 0) return;
 
-    const decay = days * 5; // -5% per day
+    const decay = days * 5;
     const oldFocus = p.focus;
     p.focus = Math.max(0, p.focus - decay);
+    if (p.focus !== oldFocus) changed = true;
 
-    if (p.focus !== oldFocus) {
-      changed = true;
-    }
-
-    // Avoid repeated immediate decay: set lastTouched to now
+    // Avoid repeated immediate decay
     p.lastTouched = now;
   });
 
-  if (changed) {
-    save();
-  }
+  if (changed) save();
+}
+
+/* =========================
+   REMINDER HELPERS
+   - reminderTime: stored when adding a reminder
+   - isReminderDue(p): returns true if 12+ hours elapsed
+   ========================= */
+function isReminderDue(p) {
+  if (!p.reminder || !p.reminderTime) return false;
+  const HOURS = 12 * 60 * 60 * 1000;
+  return (Date.now() - p.reminderTime) >= HOURS;
 }
 
 /* =========================
@@ -102,9 +102,7 @@ function adviceFor(f){
 }
 
 /* =========================
-   DASHBOARD RULES (unchanged logic)
-   Focus candidates: dating>80 OR crush>60 (max 2)
-   Paused: focus <= 20
+   DASHBOARD RULES + REMINDER PRIORITY
    ========================= */
 function updateDashboard(){
   if(!people.length){
@@ -112,6 +110,12 @@ function updateDashboard(){
     dashPause.textContent = "—";
     dashAction.textContent = "Add someone to begin.";
     return;
+  }
+
+  // reminder priority: if any reminder is due, show it (first found)
+  const dueReminder = people.find(p => isReminderDue(p));
+  if (dueReminder) {
+    dashAction.textContent = `Reminder — ${dueReminder.name}`;
   }
 
   const paused = people.filter(p => parseInt(p.focus, 10) <= 20);
@@ -128,19 +132,22 @@ function updateDashboard(){
 
   dashFocus.textContent = focusText;
   dashPause.textContent = paused.length ? paused.map(p => p.name).join(", ") : "—";
-  dashAction.textContent = candidates.length ? adviceFor(candidates[0].focus) : (() => {
-    const highest = [...people].sort((a,b)=>b.focus-a.focus)[0];
-    return highest ? adviceFor(highest.focus) : "Add someone to begin.";
-  })();
+
+  // If no reminder override, set normal action text
+  if (!dueReminder) {
+    dashAction.textContent = candidates.length ? adviceFor(candidates[0].focus) : (() => {
+      const highest = [...people].sort((a,b)=>b.focus-a.focus)[0];
+      return highest ? adviceFor(highest.focus) : "Add someone to begin.";
+    })();
+  }
 }
 
 /* =========================
-   RENDER (unchanged except safety of data fields)
+   RENDER
    ========================= */
 function render(){
   list.innerHTML = "";
 
-  // compute candidate names set
   const candidateNames = new Set(
     people
       .filter(p => (p.status === "dating" && p.focus > 80) || (p.status === "crush" && p.focus > 60))
@@ -155,6 +162,7 @@ function render(){
     let classes = "card person";
     if (isPaused) classes += " paused";
     else if (candidateNames.has(p.name)) classes += " glow";
+    if (isReminderDue(p)) classes += " reminder-due";
 
     card.className = classes;
 
@@ -182,14 +190,14 @@ function render(){
   updateDashboard();
 }
 
-/* simple escape (keeps display safe) */
+/* simple escape for safety */
 function escapeHtml(s) {
   if (!s && s !== 0) return "";
   return String(s).replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 }
 
 /* =========================
-   SAVE / REMOVE (unchanged)
+   SAVE / REMOVE
    ========================= */
 function save(){
   localStorage.setItem("rizz_people", JSON.stringify(people));
@@ -202,7 +210,7 @@ function removePerson(i){
 }
 
 /* =========================
-   FOCUS CONTROLS (unchanged)
+   FOCUS CONTROLS
    ========================= */
 document.getElementById("plus").onclick = () => {
   focus = Math.min(100, focus + 10);
@@ -230,20 +238,24 @@ const defaultBtn = document.querySelector('.status-buttons button[data-status="c
 if (defaultBtn) defaultBtn.classList.add("active");
 
 /* =========================
-   ADD (form submit) - now sets lastTouched
+   ADD (form submit) - sets lastTouched and reminderTime if reminder provided
    ========================= */
 form.addEventListener("submit", e => {
   e.preventDefault();
   const name = form.name.value.trim();
   if (!name) return;
 
+  const reminderText = form.reminder.value.trim();
+  const hasReminder = !!reminderText;
+
   people.push({
     name,
     status: statusInput.value,
     focus,
     notes: form.notes.value.trim(),
-    reminder: form.reminder.value.trim(),
-    lastTouched: Date.now() // <-- SMART ENGINE: record interaction at add/save
+    reminder: reminderText || "",
+    reminderTime: hasReminder ? Date.now() : null,
+    lastTouched: Date.now()
   });
 
   save();
@@ -260,9 +272,8 @@ form.addEventListener("submit", e => {
 });
 
 /* =========================
-   EDIT MODAL (restored behavior)
-   - openEditModal, closeEdit, saveEdit
-   - saveEdit updates lastTouched
+   EDIT MODAL (open / close / save)
+   - saveEdit updates lastTouched (counts as interaction)
    ========================= */
 let editingIndex = null;
 const editModal = document.getElementById("editModal");
@@ -286,13 +297,8 @@ function openEditModal(i){
 function closeEdit(){
   editModal.classList.add("hidden");
   editModal.setAttribute("aria-hidden","true");
-
-  // iOS repaint unlock trick (keeps Safari from trapping)
-  requestAnimationFrame(() => {
-    window.scrollBy(0, 1);
-    window.scrollBy(0, -1);
-  });
-
+  // small repaint unlock trick for Safari
+  requestAnimationFrame(() => { window.scrollBy(0,1); window.scrollBy(0,-1); });
   editingIndex = null;
 }
 
@@ -305,11 +311,8 @@ function saveEdit(){
   const newStatus = editStatusSelect.value;
   const newFocus = Math.max(0, Math.min(100, parseInt(editFocus.value, 10) || 0));
 
-  // update person
   people[editingIndex].name = newName || people[editingIndex].name;
-  if (["crush","dating","pause"].includes(newStatus)) {
-    people[editingIndex].status = newStatus;
-  }
+  if (["crush","dating","pause"].includes(newStatus)) people[editingIndex].status = newStatus;
   people[editingIndex].focus = newFocus;
 
   // SMART ENGINE: mark this as interaction (only saving counts)
@@ -321,7 +324,10 @@ function saveEdit(){
 }
 
 /* =========================
-   INIT: normalize data, run engine, then render
+   INIT
+   - normalize data
+   - run engine once on load
+   - then render
    ========================= */
 normalizePeopleData();
 runSmartFocusEngine();
