@@ -166,3 +166,11 @@ textarea {
   gap: 6px;
   border-radius: 999px;
 }
+input, textarea {
+  height: 44px;
+  border-radius: 12px;
+}
+textarea {
+  height: auto;
+  min-height: 70px;
+}
