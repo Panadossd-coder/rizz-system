@@ -153,16 +153,6 @@ function render(){
     list.appendChild(card);
   });
 
-  /* 🔍 REMINDER TEST OUTPUT (ON-SCREEN DEV) */
-  let debug = document.getElementById("debug");
-  if(!debug){
-    debug = document.createElement("pre");
-    debug.id = "debug";
-    debug.style.cssText =
-      "color:#00ff9c;font-size:12px;opacity:.6;margin-top:16px;";
-    list.after(debug);
-  }
-  debug.textContent = JSON.stringify(people, null, 2);
 
   updateDashboard();
 }
