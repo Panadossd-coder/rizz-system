@@ -1,6 +1,6 @@
 /* ===============================
    RIZZ WEB — VERSION 2.1
-   CLEAN, STABLE, EDIT FIXED
+   CLEAN, STABLE, EDIT-SAFE JS
    =============================== */
 
 /* ---------- STORAGE ---------- */
@@ -29,13 +29,13 @@ document.querySelectorAll(".status-buttons button").forEach(btn => {
     statusInput.value = btn.dataset.status;
   };
 });
-document.querySelector('[data-status="crush"]').classList.add("active");
 
 /* ---------- FOCUS CONTROLS ---------- */
 document.getElementById("plus").onclick = () => {
   focus = Math.min(100, focus + 10);
   updateFocusUI();
 };
+
 document.getElementById("minus").onclick = () => {
   focus = Math.max(0, focus - 10);
   updateFocusUI();
@@ -50,87 +50,94 @@ function updateFocusUI() {
    NEXT MOVE ENGINE (EXPANDED)
    =============================== */
 
-const datingHigh = [
-  "Plan a quality date this week",
-  "Deep conversation about direction",
-  "Talk about future goals together",
-  "Strengthen emotional safety",
-  "Create shared routines",
-  "Surprise her with thoughtful effort",
-  "Discuss exclusivity",
-  "Spend uninterrupted time together"
-];
-
-const datingMid = [
-  "Check in emotionally",
-  "Light call or voice note",
-  "Support her plans",
-  "Be consistent but calm",
-  "Flirty but relaxed conversation",
-  "Let things flow naturally"
-];
-
-const datingLow = [
-  "Give space today",
-  "No heavy talks",
-  "Minimal check-in",
-  "Focus on yourself",
-  "Observe energy"
-];
-
-const crushHigh = [
-  "Compliment her vibe",
-  "Flirt confidently",
-  "Suggest a casual meet",
-  "Build attraction playfully",
-  "Create intrigue"
-];
-
-const crushMid = [
-  "Send a fun message",
-  "Light teasing",
-  "Stay interesting",
-  "React to her energy"
-];
-
-const crushLow = [
-  "Pull back slightly",
-  "Let her miss you",
-  "Respond only",
-  "Do nothing today"
-];
-
-const pauseMoves = [
-  "Do nothing today",
-  "No contact",
-  "Reset emotional energy",
-  "Focus on yourself"
-];
+const MOVES = {
+  datingHigh: [
+    "Plan a quality date this week",
+    "Talk about future goals together",
+    "Deep conversation about direction",
+    "Create a shared routine",
+    "Discuss exclusivity",
+    "Surprise her thoughtfully",
+    "Spend uninterrupted quality time",
+    "Strengthen emotional bond",
+    "Make long-term plans",
+    "Open up emotionally"
+  ],
+  datingMid: [
+    "Check in emotionally",
+    "Plan something light",
+    "Stay consistent",
+    "Flirty but calm conversation",
+    "Support her plans",
+    "Casual call",
+    "Show appreciation",
+    "Be present, not intense"
+  ],
+  datingLow: [
+    "Give space today",
+    "Respond but don’t push",
+    "Keep it light",
+    "Avoid heavy talks",
+    "Focus on yourself",
+    "Minimal interaction"
+  ],
+  crushHigh: [
+    "Compliment her vibe",
+    "Flirt confidently",
+    "Suggest a casual meet",
+    "Create intrigue",
+    "Build attraction",
+    "Escalate playfully"
+  ],
+  crushMid: [
+    "Send a fun message",
+    "Light teasing",
+    "Stay interesting",
+    "React to her energy",
+    "Avoid over-texting"
+  ],
+  crushLow: [
+    "Pull back slightly",
+    "Let her miss you",
+    "Observe quietly",
+    "Protect your energy",
+    "Do nothing today"
+  ],
+  pause: [
+    "Do nothing today",
+    "No contact",
+    "Reset emotionally",
+    "Focus on yourself",
+    "Let time pass"
+  ]
+};
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 function getNextMove(p) {
-  if (p.status === "pause" || p.focus <= 20) return pick(pauseMoves);
+  if (p.status === "pause" || p.focus <= 20) {
+    return pick(MOVES.pause);
+  }
 
   if (p.status === "dating") {
-    if (p.focus >= 80) return pick(datingHigh);
-    if (p.focus >= 50) return pick(datingMid);
-    return pick(datingLow);
+    if (p.focus >= 80) return pick(MOVES.datingHigh);
+    if (p.focus >= 50) return pick(MOVES.datingMid);
+    return pick(MOVES.datingLow);
   }
 
   if (p.status === "crush") {
-    if (p.focus >= 60) return pick(crushHigh);
-    if (p.focus >= 30) return pick(crushMid);
-    return pick(crushLow);
+    if (p.focus >= 60) return pick(MOVES.crushHigh);
+    if (p.focus >= 30) return pick(MOVES.crushMid);
+    return pick(MOVES.crushLow);
   }
 
   return "No action today";
 }
 
 /* ===============================
-   DASHBOARD
+   DASHBOARD (SAVE-ONLY)
    =============================== */
 function updateDashboard() {
   if (!people.length) {
@@ -158,7 +165,7 @@ function updateDashboard() {
     : "—";
 
   dashAction.textContent = focused.length
-    ? `${focused[0].nextMove} — ${focused[0].name}`
+    ? focused[0].nextMove + " — " + focused[0].name
     : "Stay steady.";
 }
 
@@ -175,12 +182,13 @@ function render() {
 
     card.innerHTML = `
       <strong>${p.name}</strong>
-      <div>${p.status}</div>
+      <span class="sub">${p.status}</span>
       <div class="focus-bar">
         <div class="focus-fill" style="width:${p.focus}%"></div>
       </div>
-      <div>${p.focus}% focus</div>
-      <div><strong>Next Move:</strong> ${p.nextMove}</div>
+      <div class="sub">${p.focus}% focus</div>
+      ${p.reminder ? `<div class="reminder">⏰ ${p.reminder}</div>` : ""}
+      <div class="next-move"><strong>Next Move:</strong> ${p.nextMove}</div>
       <div class="card-actions">
         <button onclick="openEdit(${i})">Edit</button>
         <button onclick="removePerson(${i})">Remove</button>
@@ -219,9 +227,9 @@ form.onsubmit = e => {
 };
 
 /* ===============================
-   EDIT (FIXED IDS)
+   EDIT MODAL (FIXED IDS)
    =============================== */
-function openEdit(i) {
+window.openEdit = function (i) {
   editingIndex = i;
   const p = people[i];
 
@@ -231,13 +239,14 @@ function openEdit(i) {
   document.getElementById("editFocusValue").textContent = p.focus + "%";
 
   document.getElementById("editModal").classList.remove("hidden");
-}
+  document.body.style.overflow = "hidden";
+};
 
 document.getElementById("editFocus").oninput = e => {
   document.getElementById("editFocusValue").textContent = e.target.value + "%";
 };
 
-function saveEdit() {
+window.saveEdit = function () {
   const p = people[editingIndex];
 
   p.name = document.getElementById("editName").value.trim();
@@ -248,21 +257,22 @@ function saveEdit() {
   save();
   render();
   closeEdit();
-}
+};
 
-function closeEdit() {
+window.closeEdit = function () {
   document.getElementById("editModal").classList.add("hidden");
+  document.body.style.overflow = "";
   editingIndex = null;
-}
+};
 
 /* ===============================
    REMOVE
    =============================== */
-function removePerson(i) {
+window.removePerson = function (i) {
   people.splice(i, 1);
   save();
   render();
-}
+};
 
 /* ===============================
    SAVE
