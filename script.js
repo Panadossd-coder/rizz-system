@@ -135,6 +135,7 @@ function openEditModal(i){
   editFocus.value=p.focus;
   editFocusValue.textContent=p.focus+"%";
   editModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 }
 editFocus.oninput=()=>editFocusValue.textContent=editFocus.value+"%";
 
