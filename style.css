@@ -6,8 +6,12 @@ body {
   padding: 20px;
 }
 
-.subtitle { opacity: 0.6; margin-bottom: 20px; }
+.subtitle {
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
 
+/* Dashboard */
 .dashboard {
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(18px);
@@ -17,6 +21,7 @@ body {
   margin-bottom: 20px;
 }
 
+/* Status */
 .status-ok {
   background: rgba(0,255,120,0.15);
   padding: 10px;
@@ -24,6 +29,7 @@ body {
   margin-bottom: 20px;
 }
 
+/* Cards */
 .card {
   background: rgba(255,255,255,0.05);
   border-radius: 16px;
@@ -31,27 +37,25 @@ body {
   margin-bottom: 20px;
 }
 
+/* Status buttons */
 .status-buttons button {
   margin-right: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
 }
 
 .status-buttons .active {
   background: pink;
+  color: #000;
 }
 
+/* Focus */
 .focus-control {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-}
-
-.focus-control button {
-  justify-self: center;
-}
-
-.focus-control button {
-  justify-self: center;
+  margin: 12px 0;
 }
 
 .add-btn {
@@ -60,21 +64,15 @@ body {
   border: none;
   padding: 12px;
   border-radius: 14px;
+  font-weight: bold;
 }
 
+/* Person cards */
 .person {
   background: rgba(255,255,255,0.06);
   border-radius: 16px;
   padding: 14px;
   margin-bottom: 16px;
-}
-
-.person.glow {
-  box-shadow: 0 0 25px rgba(255,0,180,0.8);
-}
-
-.person.paused {
-  box-shadow: 0 0 20px rgba(255,0,0,0.5);
 }
 
 .focus-bar {
@@ -89,6 +87,7 @@ body {
   background: linear-gradient(90deg, #00e676, #00c853);
 }
 
+/* Modal */
 .modal {
   position: fixed;
   inset: 0;
@@ -98,79 +97,13 @@ body {
   align-items: center;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
 .modal-card {
   background: #111;
   padding: 20px;
   border-radius: 16px;
   width: 90%;
-}
-.card-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.card-actions button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.08);
-  color: white;
-  border: none;
-}
-
-.next-move {
-  margin-top: 8px;
-  font-size: 14px;
-  opacity: 0.85;
-}
-
-.sub {
-  font-size: 13px;
-  opacity: 0.6;
-}
-.status-buttons button {
-  min-width: 90px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border-radius: 999px;
-}
-input, textarea {
-  height: 44px;
-  border-radius: 12px;
-}
-textarea {
-  height: auto;
-  min-height: 70px;
-}
-.status-buttons button {
-  min-width: 90px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border-radius: 999px;
-}
-.status-buttons button {
-  min-width: 90px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border-radius: 999px;
-}
-input, textarea {
-  height: 44px;
-  border-radius: 12px;
-}
-textarea {
-  height: auto;
-  min-height: 70px;
 }
