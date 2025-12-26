@@ -138,3 +138,99 @@ textarea { resize: none; }
 .edit-actions .cancel {
   background: #222;
 }
+/* =========================
+   UI REALISM — V2.1
+   Visual-only upgrades
+   ========================= */
+
+/* ---------- Micro interactions ---------- */
+button {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.18s ease;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* ---------- Card entrance ---------- */
+.person {
+  animation: cardEnter 0.35s cubic-bezier(.2,.9,.2,1);
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- Focus glow breathing ---------- */
+.person.glow {
+  animation: glowPulse 3.2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 14px 32px rgba(0,0,0,.55),
+                0 0 26px rgba(0,208,138,.08);
+  }
+  50% {
+    box-shadow: 0 26px 58px rgba(0,0,0,.55),
+                0 0 48px rgba(0,208,138,.18);
+  }
+  100% {
+    box-shadow: 0 14px 32px rgba(0,0,0,.55),
+                0 0 26px rgba(0,208,138,.08);
+  }
+}
+
+/* ---------- Danger pulse (paused / <=20) ---------- */
+.person.paused {
+  animation: dangerPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes dangerPulse {
+  0% {
+    box-shadow: 0 12px 28px rgba(0,0,0,.6),
+                0 0 12px rgba(255,80,80,.10);
+  }
+  50% {
+    box-shadow: 0 18px 42px rgba(0,0,0,.6),
+                0 0 34px rgba(255,80,80,.25);
+  }
+  100% {
+    box-shadow: 0 12px 28px rgba(0,0,0,.6),
+                0 0 12px rgba(255,80,80,.10);
+  }
+}
+
+/* ---------- Dashboard alive ---------- */
+.dashboard {
+  animation: dashboardBreath 8s ease-in-out infinite;
+}
+
+@keyframes dashboardBreath {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ---------- Active status buttons ---------- */
+.status-buttons button.active {
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.45),
+    0 0 20px rgba(255,105,180,.25);
+}
