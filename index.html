@@ -80,15 +80,6 @@
 </div>
 
 <script src="script.js"></script>
-<script>
-(function () {
-  if (!sessionStorage.getItem("rizz_refresh_done")) {
-    sessionStorage.setItem("rizz_refresh_done", "1");
-    const url = new URL(window.location.href);
-    url.searchParams.set("refresh", Date.now());
-    window.location.replace(url.toString());
-  }
-})();
-</script>
+
 </body>
 </html>
