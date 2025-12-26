@@ -1,11 +1,16 @@
 const clickSound = document.getElementById("clickSound");
 
-document.addEventListener("click", e => {
-  const btn = e.target.closest("button");
-  if (!btn || !clickSound) return;
+function playClick(){
+  if (!clickSound) return;
   clickSound.currentTime = 0;
   clickSound.volume = 0.35;
   clickSound.play().catch(()=>{});
+}
+
+window.addEventListener("load", () => {
+  document.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", playClick, { passive: true });
+  });
 });
 
 const form = document.getElementById("addForm");
