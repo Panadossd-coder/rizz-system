@@ -12,6 +12,7 @@
     <h1>Rizz Web</h1>
     <div class="sub">Version 2 — Smart Focus</div>
 
+    <!-- DASHBOARD -->
     <div id="dashboard" class="card dashboard">
       <h3>💘 Today’s Dashboard</h3>
       <div class="dash-item">🎯 Focus: <span id="dashFocus">—</span></div>
@@ -21,6 +22,7 @@
 
     <div class="card status">✅ Version 2 running</div>
 
+    <!-- FORM -->
     <form id="addForm" class="card">
       <input name="name" placeholder="Name" required />
 
@@ -51,43 +53,41 @@
     <div id="peopleList"></div>
   </div>
 
+  <!-- click sound -->
   <audio id="clickSound" src="click.mp3" preload="auto"></audio>
 
   <!-- EDIT MODAL -->
- <!-- EDIT MODAL (replace your old modal block with this) -->
-<div id="editModal" class="edit-modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
-  <div class="edit-box">
-    <h3>Edit</h3>
+  <div id="editModal" class="edit-modal hidden">
+    <div class="edit-box">
+      <h3>Edit</h3>
 
-    <label for="editNameInput" class="sr-only">Name</label>
-    <input id="editNameInput" type="text" placeholder="Name" />
+      <input id="editNameInput" type="text" placeholder="Name" />
 
-    <label for="editStatusSelect" class="sr-only">Status</label>
-    <select id="editStatusSelect" aria-label="Status">
-      <option value="crush">💘 Crush</option>
-      <option value="dating">💞 Dating</option>
-      <option value="pause">⏸ Pause</option>
-    </select>
+      <select id="editStatusSelect">
+        <option value="crush">💘 Crush</option>
+        <option value="dating">💞 Dating</option>
+        <option value="pause">⏸ Pause</option>
+      </select>
 
-    <div class="slider-wrap">
       <input type="range" id="editFocus" min="0" max="100" />
       <div id="editFocusValue">0%</div>
-    </div>
 
-    <div class="edit-actions">
-      <button type="button" onclick="closeEdit()">Cancel</button>
-      <button type="button" onclick="saveEdit()">Save</button>
+      <div class="edit-actions">
+        <button type="button" onclick="closeEdit()">Cancel</button>
+        <button type="button" onclick="saveEdit()">Save</button>
+      </div>
     </div>
   </div>
-</div>
 
   <script src="script.js"></script>
-<script>
-/* ONE-TIME GITHUB CACHE REFRESH */
-if (!sessionStorage.getItem("rizz_refreshed")) {
-  sessionStorage.setItem("rizz_refreshed", "true");
-  location.reload(true);
-}
-</script>
+
+  <!-- ONE-TIME GITHUB CACHE REFRESH -->
+  <script>
+  if (!sessionStorage.getItem("rizz_refreshed")) {
+    sessionStorage.setItem("rizz_refreshed", "true");
+    location.reload(true);
+  }
+  </script>
+
 </body>
 </html>
