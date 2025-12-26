@@ -190,9 +190,8 @@ function updateDashboard(){
     : "—";
 
   dashAction.textContent = candidates.length
-    ? adviceFor(candidates[0].focus)
-    : "Stay steady.";
-}
+  ? (candidates[0].nextMove || adviceFor(candidates[0].focus))
+  : "Stay steady.";
 
 /* =========================
    RENDER (REMINDER TEST ENABLED)
