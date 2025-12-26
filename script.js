@@ -1,6 +1,6 @@
 /* ===============================
-   RIZZ WEB — VERSION 2 (LOCKED)
-   Clean, Stable, Production JS
+   RIZZ WEB — VERSION 2.1
+   CLEAN, FIXED, STABLE JS
    =============================== */
 
 /* ---------- STORAGE ---------- */
@@ -29,9 +29,8 @@ document.querySelectorAll(".status-buttons button").forEach(btn => {
     statusInput.value = btn.dataset.status;
   };
 });
-document.querySelector('[data-status="crush"]').classList.add("active");
 
-/* ---------- FOCUS CONTROLS (UI ONLY) ---------- */
+/* ---------- FOCUS CONTROLS ---------- */
 document.getElementById("plus").onclick = () => {
   focus = Math.min(100, focus + 10);
   updateFocusUI();
@@ -47,7 +46,7 @@ function updateFocusUI(){
 }
 
 /* ===============================
-   NEXT MOVE ENGINE (HUGE SET)
+   NEXT MOVE ENGINE (LARGE SET)
    =============================== */
 
 const datingHigh = [
@@ -146,9 +145,7 @@ function pick(arr){
 }
 
 function getNextMove(p){
-  if (p.status === "pause" || p.focus <= 20) {
-    return pick(pauseMoves);
-  }
+  if (p.status === "pause" || p.focus <= 20) return pick(pauseMoves);
 
   if (p.status === "dating") {
     if (p.focus >= 80) return pick(datingHigh);
@@ -166,7 +163,7 @@ function getNextMove(p){
 }
 
 /* ===============================
-   DASHBOARD (SAVE-ONLY)
+   DASHBOARD
    =============================== */
 function updateDashboard(){
   if (!people.length) {
@@ -212,12 +209,15 @@ function render(){
     card.innerHTML = `
       <strong>${p.name}</strong>
       <span class="sub">${p.status}</span>
+
       <div class="focus-bar">
         <div class="focus-fill" style="width:${p.focus}%"></div>
       </div>
+
       <div class="sub">${p.focus}% focus</div>
       ${p.reminder ? `<div class="reminder">⏰ ${p.reminder}</div>` : ""}
       <div class="next-move"><strong>Next Move:</strong> ${p.nextMove}</div>
+
       <div class="card-actions">
         <button onclick="openEdit(${i})">Edit</button>
         <button onclick="removePerson(${i})">Remove</button>
@@ -230,7 +230,7 @@ function render(){
 }
 
 /* ===============================
-   ADD PERSON (SAVE TRIGGERS LOGIC)
+   ADD PERSON
    =============================== */
 form.onsubmit = e => {
   e.preventDefault();
@@ -256,25 +256,31 @@ form.onsubmit = e => {
 };
 
 /* ===============================
-   EDIT
+   EDIT MODAL (FIXED)
    =============================== */
 function openEdit(i){
   editingIndex = i;
   const p = people[i];
 
-  document.getElementById("editNameInput").value = p.name;
-  document.getElementById("editStatusSelect").value = p.status;
+  document.getElementById("editName").value = p.name;
+  document.getElementById("editStatus").value = p.status;
   document.getElementById("editFocus").value = p.focus;
   document.getElementById("editFocusValue").textContent = p.focus + "%";
 
   document.getElementById("editModal").classList.remove("hidden");
 }
 
+document.getElementById("editFocus").oninput = e => {
+  document.getElementById("editFocusValue").textContent = e.target.value + "%";
+};
+
 function saveEdit(){
+  if (editingIndex === null) return;
+
   const p = people[editingIndex];
 
-  p.name = document.getElementById("editNameInput").value.trim();
-  p.status = document.getElementById("editStatusSelect").value;
+  p.name = document.getElementById("editName").value.trim();
+  p.status = document.getElementById("editStatus").value;
   p.focus = parseInt(document.getElementById("editFocus").value, 10);
   p.nextMove = getNextMove(p);
 
