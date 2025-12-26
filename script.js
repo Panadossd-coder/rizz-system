@@ -125,6 +125,30 @@ function removePerson(i){
   people.splice(i,1);
   save(); render();
 }
+function editPerson(i){
+  const p = people[i];
+
+  const newName = prompt("Edit name:", p.name);
+  if (newName === null) return;
+
+  const newStatus = prompt("Edit status (crush, dating, pause):", p.status);
+  if (newStatus === null) return;
+
+  const newFocus = prompt("Edit focus (0–100):", p.focus);
+  if (newFocus === null) return;
+
+  // sanitize
+  const focusNum = Math.max(0, Math.min(100, parseInt(newFocus, 10) || 0));
+
+  p.name = newName.trim() || p.name;
+  p.status = ["crush","dating","pause"].includes(newStatus)
+    ? newStatus
+    : p.status;
+  p.focus = focusNum;
+
+  save();
+  render();
+}
 function editStatus(i){
   const current = people[i].status;
 
