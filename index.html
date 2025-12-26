@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Rizz Web — Version 2</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rizz Web — Version 2 (Upgrade)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <div class="app">
     <h1>Rizz Web</h1>
-    <div class="sub">Version 2 — Smart Focus (Vercel Stable)</div>
+    <div class="sub">Version 2 — Smart Focus (Upgraded)</div>
 
     <!-- DASHBOARD -->
     <div id="dashboard" class="card dashboard">
@@ -20,7 +19,7 @@
       <div class="dash-item">🧠 Action: <span id="dashAction">Add someone to begin.</span></div>
     </div>
 
-    <div class="card">✅ Version 2 running</div>
+    <div class="card status">✅ Version 2 running</div>
 
     <!-- FORM -->
     <form id="addForm" class="card">
@@ -45,7 +44,7 @@
       <input type="hidden" name="focus" value="0" />
 
       <textarea name="notes" placeholder="Notes"></textarea>
-      <input name="reminder" placeholder="Reminder (e.g. Call tonight)" />
+      <input name="reminder" placeholder="Reminder (optional text; used to mark a reminder)" />
 
       <button type="submit">Add</button>
     </form>
@@ -53,23 +52,27 @@
     <div id="peopleList"></div>
   </div>
 
+  <!-- click sound (optional) -->
+  <audio id="clickSound" src="click.mp3" preload="auto" aria-hidden="true"></audio>
+
   <!-- EDIT MODAL -->
-  <div id="editModal" class="edit-modal hidden" aria-hidden="true">
+  <div id="editModal" class="edit-modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
     <div class="edit-box">
       <h3>Edit</h3>
 
-      <input id="editNameInput" placeholder="Name" />
-      <select id="editStatusSelect">
+      <input id="editNameInput" type="text" placeholder="Name" />
+
+      <select id="editStatusSelect" aria-label="Status">
         <option value="crush">💘 Crush</option>
         <option value="dating">💞 Dating</option>
         <option value="pause">⏸ Pause</option>
       </select>
 
       <input type="range" id="editFocus" min="0" max="100" />
-      <div id="editFocusValue">0%</div>
+      <div id="editFocusValue" style="text-align:center;margin-top:8px;color:#ff99c8;font-weight:700;">0%</div>
 
       <div class="edit-actions">
-        <button class="cancel" type="button" onclick="closeEdit()">Cancel</button>
+        <button type="button" class="cancel" onclick="closeEdit()">Cancel</button>
         <button type="button" onclick="saveEdit()">Save</button>
       </div>
     </div>
