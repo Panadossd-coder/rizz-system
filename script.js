@@ -150,11 +150,18 @@ function closeEdit(){
 }
 
 function saveEdit(){
-  const p=people[editingIndex];
-  p.name=editNameInput.value.trim();
-  p.status=editStatusSelect.value;
-  p.focus=parseInt(editFocus.value,10);
-  save(); render(); closeEdit();
+  if (editingIndex === null) return; // 🔥 SAFETY GUARD (REQUIRED)
+
+  const p = people[editingIndex];
+  if (!p) return; // 🔥 extra safety for iOS
+
+  p.name = editNameInput.value.trim() || p.name;
+  p.status = editStatusSelect.value;
+  p.focus = Math.max(0, Math.min(100, parseInt(editFocus.value, 10) || 0));
+
+  save();
+  render();
+  closeEdit();
 }
 
 /* Init */
