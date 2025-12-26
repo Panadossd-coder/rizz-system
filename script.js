@@ -29,8 +29,9 @@ const focusInput = form.querySelector('input[name="focus"]');
 
 let focus = 0;
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
+
 /* =========================
-   EDIT MODAL LOGIC
+   EDIT MODAL LOGIC (FINAL)
    ========================= */
 let editingIndex = null;
 
@@ -70,6 +71,7 @@ function saveEdit(){
   render();
   closeEdit();
 }
+
 /* ---------------- STATUS BUTTONS ---------------- */
 document.querySelectorAll(".status-buttons button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -81,7 +83,6 @@ document.querySelectorAll(".status-buttons button").forEach(btn => {
   });
 });
 
-// default active
 const defaultStatusBtn = document.querySelector('.status-buttons button[data-status="crush"]');
 if (defaultStatusBtn) defaultStatusBtn.classList.add("active");
 
@@ -149,7 +150,7 @@ function render(){
       <p>${p.notes || ""}</p>
 
       <div class="card-actions">
-      <button onclick="editPerson(${i})">Edit</button>
+        <button onclick="editPerson(${i})">Edit</button>
         <button onclick="removePerson(${i})">Remove</button>
       </div>
     `;
@@ -163,63 +164,6 @@ function render(){
 /* ---------------- REMOVE ---------------- */
 function removePerson(i){
   people.splice(i,1);
-  save(); render();
-}
-function editPerson(i){
-  const p = people[i];
-
-  const newName = prompt("Edit name:", p.name);
-  if (newName === null) return;
-
-  const newStatus = prompt("Edit status (crush, dating, pause):", p.status);
-  if (newStatus === null) return;
-  let focusNum = p.focus;
-
-  const slider = document.createElement("input");
-  slider.type = "range";
-  slider.min = 0;
-  slider.max = 100;
-  slider.value = p.focus;
-  slider.style.width = "100%";
-
-  const wrapper = document.createElement("div");
-  wrapper.style.padding = "10px 0";
-
-  const label = document.createElement("div");
-  label.textContent = `Focus: ${slider.value}%`;
-  label.style.marginBottom = "6px";
-  label.style.fontWeight = "700";
-
-  slider.oninput = () => {
-    label.textContent = `Focus: ${slider.value}%`;
-  };
-
-  wrapper.appendChild(label);
-  wrapper.appendChild(slider);
-
-  const ok = confirm("Adjust focus using the slider, then press OK.");
-  if (!ok) return;
-
-  focusNum = parseInt(slider.value, 10);
-
-  p.name = newName.trim() || p.name;
-  p.status = ["crush","dating","pause"].includes(newStatus)
-    ? newStatus
-    : p.status;
-  p.focus = focusNum;
-
-  save();
-  render();
-}
-function editStatus(i){
-  const current = people[i].status;
-
-  let next;
-  if (current === "crush") next = "dating";
-  else if (current === "dating") next = "pause";
-  else next = "crush";
-
-  people[i].status = next;
   save();
   render();
 }
@@ -243,17 +187,16 @@ form.addEventListener("submit", e=>{
     reminder: form.reminder.value.trim()
   });
 
-  save(); render();
+  save();
+  render();
 
-  // RESET
   form.reset();
   focus = 0;
   updateFocus();
   statusInput.value = "crush";
   document.querySelectorAll(".status-buttons button")
     .forEach(b=>b.classList.remove("active"));
-  const defBtn = document.querySelector('.status-buttons button[data-status="crush"]');
-  if(defBtn) defBtn.classList.add("active");
+  if (defaultStatusBtn) defaultStatusBtn.classList.add("active");
 });
 
 /* INIT */
