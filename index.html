@@ -55,14 +55,23 @@
 
   <!-- audio file for button clicks (upload click.mp3 to repo root) -->
   <audio id="clickSound" src="click.mp3" preload="auto" aria-hidden="true"></audio>
+<!-- EDIT FOCUS MODAL -->
+<div id="editModal" class="edit-modal hidden">
+  <div class="edit-box">
+    <h3>Edit Focus</h3>
+    <div id="editName"></div>
 
+    <input type="range" id="editFocus" min="0" max="100" />
+
+    <div id="editFocusValue">0%</div>
+
+    <div class="edit-actions">
+      <button onclick="closeEdit()">Cancel</button>
+      <button onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
   <script src="script.js"></script>
-<script>
-/* ONE-TIME GITHUB CACHE REFRESH */
-if (!sessionStorage.getItem("rizz_refreshed")) {
-  sessionStorage.setItem("rizz_refreshed", "true");
-  location.reload(true);
-}
-</script>
+
 </body>
 </html>
