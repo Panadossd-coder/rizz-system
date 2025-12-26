@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Rizz Web — Version 2 (Upgrade)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+/* =========================
+   Rizz Web — Version 2 (Upgrade)
+   CSS — preserve V2 layout; add glow & animations
+   ========================= */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 { font-size: 28px; margin-bottom: 4px; }
+.sub { color: #9aa3ad; font-size: 14px; margin-bottom: 14px; }
+
+/* Card base */
+.card {
+  background: #0f1112;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+/* Dashboard */
+.dashboard {
+  position: relative;
+  text-align: center;
+  border-radius: 18px;
+  padding: 20px 18px;
+  background: radial-gradient(circle at top, rgba(255,105,180,0.18), #0f1112 70%);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.65), 0 0 28px rgba(255,105,180,0.22);
+  will-change: transform;
+}
+.dashboard h3 { margin-bottom: 14px; font-size: 18px; font-weight:700; color:#fff; }
+.dash-item { margin-top: 8px; font-size:15px; }
+.dash-item span { font-weight:700; color:#ff9fcf; }
+
+/* Form & inputs */
+input, textarea, button, select {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  background: rgba(255,255,255,0.03);
+  color: #fff;
+}
+textarea { resize: none; min-height: 80px; }
+
+/* Status buttons */
+.status-buttons { display:flex; gap:10px; margin-top:8px; }
+.status-buttons button {
+  flex:1;
+  background:#1c1f22;
+  color:#fff;
+  border-radius:12px;
+  padding:10px;
+}
+.status-buttons button.active { background: linear-gradient(135deg,#ff6aa2,#ff99c8); color:#000; font-weight:700; }
+
+/* Focus controls */
+.focus-control { display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center; margin-top:10px; }
+.focus-control button { height:56px; font-size:26px; border-radius:18px; background: linear-gradient(135deg,#ff6aa2,#ff99c8); color:#000; }
+#focusValue { font-size:22px; font-weight:800; color:#ff99c8; min-width:64px; text-align:center; }
+
+/* add button */
+button[type="submit"] { background: linear-gradient(135deg,#00d08a,#00f2a0); color: #000; font-weight:800; padding:14px; border-radius:12px; }
+
+/* People card */
+.person {
+  border-radius: 16px;
+  padding:16px;
+  transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s ease;
+  position: relative;
+  overflow: visible;
+}
+.person .sub { color:#9aa3ad; display:block; margin-top:6px; }
+
+/* focus bar */
+.focus-bar { height:8px; background:#1c1f22; border-radius:6px; overflow:hidden; margin-top:8px; }
+.focus-fill { height:100%; background:#00d08a; transition: width .35s ease; }
+
+/* advice */
+.advice { margin-top:8px; font-size:13px; color:#9aa3ad; font-style:italic; }
+
+/* card actions */
+.card-actions { display:flex; gap:12px; margin-top:14px; }
+.card-actions button { flex:1; background: rgba(255,255,255,0.04); color:#fff; padding:12px; border-radius:12px; }
+
+/* glow states */
+/* Green focus glow */
+.person.glow {
+  box-shadow: 0 18px 48px rgba(0,0,0,0.55), 0 0 40px rgba(0,208,138,0.14);
+  border: 1px solid rgba(0,208,138,0.06);
+  transform: translateY(-4px);
+  animation: glowGreen 3s ease-in-out infinite;
+}
+@keyframes glowGreen {
+  0% { box-shadow: 0 12px 30px rgba(0,0,0,0.55), 0 0 28px rgba(0,208,138,0.06); transform: translateY(-2px); }
+  50% { box-shadow: 0 26px 60px rgba(0,0,0,0.55), 0 0 48px rgba(0,208,138,0.14); transform: translateY(-6px); }
+  100% { box-shadow: 0 12px 30px rgba(0,0,0,0.55), 0 0 28px rgba(0,208,138,0.06); transform: translateY(-2px); }
+}
+
+/* Red paused glow */
+.person.paused {
+  border: 1px solid rgba(255,80,80,0.10);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55), 0 0 28px rgba(255,40,40,0.06) inset;
+  animation: pulseRed 1.8s ease-in-out infinite;
+}
+@keyframes pulseRed {
+  0% { box-shadow: 0 8px 20px rgba(0,0,0,0.55), 0 0 12px rgba(255,60,60,0.06); transform: translateY(0); }
+  50% { box-shadow: 0 16px 36px rgba(0,0,0,0.55), 0 0 36px rgba(255,60,60,0.14); transform: translateY(-2px); }
+  100% { box-shadow: 0 8px 20px rgba(0,0,0,0.55), 0 0 12px rgba(255,60,60,0.06); transform: translateY(0); }
+}
+
+/* paused label */
+.person.paused::after {
+  content: " PAUSED";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size:12px;
+  color:#ff8b8b;
+  font-weight:700;
+  background: rgba(255,255,255,0.02);
+  padding:4px 8px;
+  border-radius:8px;
+}
+
+/* responsive tweaks */
+@media (max-width:420px) {
+  .focus-control { grid-template-columns: 1fr auto 1fr; gap:10px; }
+  .focus-control button { height:52px; }
+}
+
+/* accessibility: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .person.glow, .person.paused { animation: none; transform: none; box-shadow: none; }
+}
+
+/* small helpers */
+.hidden { display:none !important; }
+.edit-modal {
+  position: fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background: rgba(0,0,0,0.6); z-index:9999;
+}
+.edit-box {
+  width:92%; max-width:360px; border-radius:14px; padding:16px; background: linear-gradient(180deg,#0b0b0b,#111214);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+.edit-actions { display:flex; gap:10px; margin-top:12px; }
+.edit-actions button { flex:1; padding:12px; border-radius:10px; border:none; background:#00d08a; color:#000; font-weight:700; }
+.edit-actions button.cancel { background: rgba(255,255,255,0.06); color:#fff; }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Rizz Web</h1>
+    <div class="sub">Version 2 — Smart Focus (Upgraded)</div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card dashboard">
+      <h3>💘 Today's Dashboard</h3>
+      <div class="dash-item">🎯 Focus: <span id="dashFocus">—</span></div>
+      <div class="dash-item">⏸ Pause: <span id="dashPause">—</span></div>
+      <div class="dash-item">🧠 Action: <span id="dashAction">Add someone to begin.</span></div>
+    </div>
+
+    <div class="card status">✅ Version 2 running</div>
+
+    <!-- FORM -->
+    <form id="addForm" class="card">
+      <input name="name" placeholder="Name" required />
+
+      <div class="label">Status</div>
+      <div class="status-buttons">
+        <button type="button" data-status="crush">💘 Crush</button>
+        <button type="button" data-status="dating">💞 Dating</button>
+        <button type="button" data-status="pause">⏸ Pause</button>
+      </div>
+
+      <input type="hidden" name="status" value="crush" />
+
+      <div class="label">Set Focus</div>
+      <div class="focus-control">
+        <button type="button" id="minus">−</button>
+        <span id="focusValue">0%</span>
+        <button type="button" id="plus">+</button>
+      </div>
+
+      <input type="hidden" name="focus" value="0" />
+
+      <textarea name="notes" placeholder="Notes"></textarea>
+      <input name="reminder" placeholder="Reminder (e.g. Call tonight)" />
+
+      <button type="submit">Add</button>
+    </form>
+
+    <div id="peopleList"></div>
+  </div>
+
+  <!-- click sound (optional) -->
+  <audio id="clickSound" src="click.mp3" preload="auto" aria-hidden="true"></audio>
+
+  <!-- EDIT MODAL -->
+  <div id="editModal" class="edit-modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="edit-box">
+      <h3>Edit</h3>
+
+      <input id="editNameInput" type="text" placeholder="Name" />
+
+      <select id="editStatusSelect" aria-label="Status">
+        <option value="crush">💘 Crush</option>
+        <option value="dating">💞 Dating</option>
+        <option value="pause">⏸ Pause</option>
+      </select>
+
+      <input type="range" id="editFocus" min="0" max="100" />
+      <div id="editFocusValue" style="text-align:center;margin-top:8px;color:#ff99c8;font-weight:700;">0%</div>
+
+      <div class="edit-actions">
+        <button type="button" class="cancel" onclick="closeEdit()">Cancel</button>
+        <button type="button" onclick="saveEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* =========================
+   Rizz Web — Version 2 Upgrade
+   JS — uses localStorage key "rizz_people"
+   ========================= */
+
+const clickSound = document.getElementById("clickSound");
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn || !clickSound) return;
+  try {
+    clickSound.currentTime = 0;
+    clickSound.volume = 0.35;
+    clickSound.play().catch(() => {});
+  } catch (err) {}
+});
+
+/* CORE ELEMENTS */
+const form = document.getElementById("addForm");
+const list = document.getElementById("peopleList");
+
+const dashFocus = document.getElementById("dashFocus");
+const dashPause = document.getElementById("dashPause");
+const dashAction = document.getElementById("dashAction");
+
+const focusValueEl = document.getElementById("focusValue");
+const statusInput = form.querySelector('input[name="status"]');
+const focusInput = form.querySelector('input[name="focus"]');
+
+let focus = 0;
+let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
+
+/* STATUS BUTTONS (form) */
+document.querySelectorAll(".status-buttons button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".status-buttons button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    statusInput.value = btn.dataset.status;
+  });
+});
+const defaultBtn = document.querySelector('.status-buttons button[data-status="crush"]');
+if (defaultBtn) defaultBtn.classList.add("active");
+
+/* FOCUS CONTROLS (form) */
+document.getElementById("plus").onclick = () => {
+  focus = Math.min(100, focus + 10);
+  updateFocus();
+};
+document.getElementById("minus").onclick = () => {
+  focus = Math.max(0, focus - 10);
+  updateFocus();
+};
+function updateFocus() {
+  focusValueEl.textContent = `${focus}%`;
+  focusInput.value = focus;
+}
+
+/* ADVICE HELPER */
+function adviceFor(f){
+  if (f >= 80) return "High priority. Reach out or plan a meet.";
+  if (f >= 60) return "Good momentum. Stay consistent.";
+  if (f >= 30) return "Keep it steady. No pressure.";
+  return "Low priority. Do not over-invest.";
+}
+
+/* =========================
+   DASHBOARD RULES (new)
+   - focus candidates: dating>80 OR crush>60
+   - show up to 2 focus people
+   - paused: focus <= 20 (show in Pause)
+   ========================= */
+function updateDashboard() {
+  if (!people.length) {
+    dashFocus.textContent = "—";
+    dashPause.textContent = "—";
+    dashAction.textContent = "Add someone to begin.";
+    return;
+  }
+
+  // Pause group: anyone with focus <= 20
+  const paused = people.filter(p => parseInt(p.focus,10) <= 20);
+
+  // Focus candidates: dating>80 OR crush>60
+  const candidates = people
+    .filter(p => (p.status === "dating" && p.focus > 80) || (p.status === "crush" && p.focus > 60))
+    .sort((a,b) => b.focus - a.focus);
+
+  // limit to 2
+  const topFocus = candidates.slice(0,2);
+
+  // fallback: if no candidates, use highest-focus person (single)
+  let focusText = "—";
+  if (topFocus.length) focusText = topFocus.map(p => p.name).join(", ");
+  else {
+    const highest = [...people].sort((a,b)=>b.focus-a.focus)[0];
+    if (highest && typeof highest.name !== "undefined") focusText = highest.name;
+  }
+
+  dashFocus.textContent = focusText;
+
+  // paused names
+  dashPause.textContent = paused.length ? paused.map(p => p.name).join(", ") : "—";
+
+  // Action: prefer advice for the main focus person
+  let actionText = "Add someone to begin.";
+  if (topFocus.length) actionText = adviceFor(topFocus[0].focus);
+  else {
+    const highest = [...people].sort((a,b)=>b.focus-a.focus)[0];
+    if (highest) actionText = adviceFor(highest.focus);
+  }
+  dashAction.textContent = actionText;
+}
+
+/* =========================
+   RENDER - cards with glows & paused state
+   ========================= */
+function render(){
+  list.innerHTML = "";
+
+  // compute which people are "focus candidates" (so we can mark glow)
+  const candidateNames = new Set(
+    people
+      .filter(p => (p.status === "dating" && p.focus > 80) || (p.status === "crush" && p.focus > 60))
+      .sort((a,b)=> b.focus - a.focus)
+      .slice(0,2)
+      .map(p=>p.name)
+  );
+
+  people.forEach((p,i)=>{
+    const card = document.createElement("div");
+
+    // determine classes
+    let classes = "card person";
+    // paused if focus <= 20
+    const isPaused = parseInt(p.focus,10) <= 20;
+    if (isPaused) classes += " paused";
+    else if (candidateNames.has(p.name)) classes += " glow";
+
+    card.className = classes;
+
+    // build inner HTML (include reminder if any)
+    card.innerHTML = `
+      <strong>${escapeHtml(p.name)}</strong>
+      <span class="sub">${escapeHtml(p.status)}</span>
+
+      <div class="focus-bar" aria-hidden="true">
+        <div class="focus-fill" style="width:${p.focus}%"></div>
+      </div>
+      <div class="sub">${p.focus}% focus</div>
+
+      ${p.reminder ? `<div class="reminder">⏰ ${escapeHtml(p.reminder)}</div>` : ""}
+      <div class="advice">${escapeHtml(adviceFor(p.focus))}</div>
+
+      <div class="card-actions">
+        <button type="button" onclick="openEditModal(${i})">Edit</button>
+        <button type="button" onclick="removePerson(${i})">Remove</button>
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+
+  updateDashboard();
+}
+
+/* escape helper to avoid accidental HTML injection when rendering text */
+function escapeHtml(s) {
+  if (!s && s !== 0) return "";
+  return String(s).replace(/[&<>"']/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+
+/* =========================
+   ADD
+   ========================= */
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const name = form.name.value.trim();
+  if (!name) return;
+
+  people.push({
+    name,
+    status: statusInput.value,
+    focus,
+    notes: form.notes.value.trim(),
+    reminder: form.reminder.value.trim()
+  });
+
+  save();
+  render();
+
+  form.reset();
+  focus = 0;
+  updateFocus();
+  statusInput.value = "crush";
+  document.querySelectorAll(".status-buttons button").forEach(b=>b.classList.remove("active"));
+  if (defaultBtn) defaultBtn.classList.add("active");
+});
+
+/* =========================
+   SAVE / REMOVE
+   ========================= */
+function save(){
+  localStorage.setItem("rizz_people", JSON.stringify(people));
+}
+
+function removePerson(i){
+  people.splice(i,1);
+  save();
+  render();
+}
+
+/* =========================
+   EDIT MODAL (full restore + slider)
+   ========================= */
+let editingIndex = null;
+const editModal = document.getElementById("editModal");
+const editNameInput = document.getElementById("editNameInput");
+const editStatusSelect = document.getElementById("editStatusSelect");
+const editFocus = document.getElementById("editFocus");
+const editFocusValue = document.getElementById("editFocusValue");
+
+function openEditModal(i){
+  editingIndex = i;
+  const p = people[i];
+  editNameInput.value = p.name || "";
+  editStatusSelect.value = p.status || "crush";
+  editFocus.value = p.focus || 0;
+  editFocusValue.textContent = (p.focus || 0) + "%";
+  editModal.classList.remove("hidden");
+  editModal.setAttribute("aria-hidden","false");
+  setTimeout(()=> editNameInput.focus(), 120);
+}
+function closeEdit(){
+  editModal.classList.add("hidden");
+  editModal.setAttribute("aria-hidden","true");
+  editingIndex = null;
+}
+editFocus.oninput = () => editFocusValue.textContent = editFocus.value + "%";
+
+function saveEdit(){
+  if (editingIndex === null) return;
+  const newName = editNameInput.value.trim();
+  const newStatus = editStatusSelect.value;
+  const newFocus = Math.max(0, Math.min(100, parseInt(editFocus.value,10) || 0));
+
+  people[editingIndex].name = newName || people[editingIndex].name;
+  if (["crush","dating","pause"].includes(newStatus)) people[editingIndex].status = newStatus;
+  people[editingIndex].focus = newFocus;
+
+  save();
+  render();
+  closeEdit();
+}
+
+/* =========================
+   INIT
+   ========================= */
+updateFocus();
+render();
+
+/* =========================
+   Extra: if you want a one-time page refresher for GitHub Pages caching
+   you can use this snippet separately (not auto-run here).
+   Example (run once in console):
+     sessionStorage.setItem("rizz_refreshed","1"); location.reload(true);
+   ========================= */
+
+  </script>
+</body>
+</html>
