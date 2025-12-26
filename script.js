@@ -143,8 +143,12 @@ function closeEdit(){
   editModal.classList.add("hidden");
   editModal.setAttribute("aria-hidden","true");
 
-  // ✅ STEP 3 FIX — restore scrolling (CRITICAL)
+  // 🔥 iOS HARD RESET
   document.body.style.overflow = "";
+  document.body.style.position = "";
+  document.body.style.touchAction = "";
+
+  editModal.style.pointerEvents = "none"; // ✅ KEY LINE
 
   editingIndex = null;
 }
