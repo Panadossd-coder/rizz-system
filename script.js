@@ -201,7 +201,7 @@
     save();
     render();
   }
-
+window.removePerson = removePerson;
   /* =========================
      Edit modal (global functions used by inline onclick)
      ========================= */
