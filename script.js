@@ -4,6 +4,17 @@
    =============================== */
 
 /* ---------- STATE ---------- */
+/* ===============================
+   ONE-TIME CACHE REFRESHER
+   (Vercel / GitHub Pages / iOS)
+   =============================== */
+(function () {
+  const KEY = "rizz_cache_refreshed_v2";
+  if (!sessionStorage.getItem(KEY)) {
+    sessionStorage.setItem(KEY, "true");
+    location.reload(true);
+  }
+})();
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
 let focus = 0;
 let editingIndex = null;
