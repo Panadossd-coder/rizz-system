@@ -29,7 +29,47 @@ const focusInput = form.querySelector('input[name="focus"]');
 
 let focus = 0;
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
+/* =========================
+   EDIT MODAL LOGIC
+   ========================= */
+let editingIndex = null;
 
+function editPerson(i){
+  editingIndex = i;
+  const p = people[i];
+
+  document.getElementById("editName").textContent = p.name;
+
+  const slider = document.getElementById("editFocus");
+  const value = document.getElementById("editFocusValue");
+
+  slider.value = p.focus;
+  value.textContent = p.focus + "%";
+
+  slider.oninput = () => {
+    value.textContent = slider.value + "%";
+  };
+
+  document.getElementById("editModal").classList.remove("hidden");
+}
+
+function closeEdit(){
+  document.getElementById("editModal").classList.add("hidden");
+  editingIndex = null;
+}
+
+function saveEdit(){
+  if (editingIndex === null) return;
+
+  people[editingIndex].focus = parseInt(
+    document.getElementById("editFocus").value,
+    10
+  );
+
+  save();
+  render();
+  closeEdit();
+}
 /* ---------------- STATUS BUTTONS ---------------- */
 document.querySelectorAll(".status-buttons button").forEach(btn => {
   btn.addEventListener("click", () => {
