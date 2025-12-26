@@ -1,10 +1,9 @@
 /* =========================
    Rizz Web — Version 2
-   JS (Reminder Test Mode)
-   ⚠️ ONLY adds testing output
+   Stable Core + Next Move
    ========================= */
 
-/* click sound */
+/* ---------- OPTIONAL CLICK SOUND ---------- */
 const clickSound = document.getElementById("clickSound");
 document.addEventListener("click", e => {
   const btn = e.target.closest("button");
@@ -12,11 +11,11 @@ document.addEventListener("click", e => {
   try {
     clickSound.currentTime = 0;
     clickSound.volume = 0.35;
-    clickSound.play().catch(()=>{});
-  } catch(e){}
+    clickSound.play().catch(() => {});
+  } catch (e) {}
 });
 
-/* core elements */
+/* ---------- CORE ELEMENTS ---------- */
 const form = document.getElementById("addForm");
 const list = document.getElementById("peopleList");
 
@@ -28,109 +27,101 @@ const focusValueEl = document.getElementById("focusValue");
 const statusInput = form.querySelector('[name="status"]');
 const focusInput = form.querySelector('[name="focus"]');
 
-/* state */
+/* ---------- STATE ---------- */
 let focus = 0;
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
+let editingIndex = null;
 
 /* =========================
    STATUS BUTTONS
    ========================= */
-document.querySelectorAll(".status-buttons button").forEach(btn=>{
-  btn.onclick = ()=>{
-    document.querySelectorAll(".status-buttons button")
-      .forEach(b=>b.classList.remove("active"));
+document.querySelectorAll(".status-buttons button").forEach(btn => {
+  btn.onclick = () => {
+    document
+      .querySelectorAll(".status-buttons button")
+      .forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     statusInput.value = btn.dataset.status;
   };
 });
+
 const defaultBtn = document.querySelector('[data-status="crush"]');
-if(defaultBtn) defaultBtn.classList.add("active");
+if (defaultBtn) defaultBtn.classList.add("active");
 
 /* =========================
    FOCUS CONTROLS
    ========================= */
-document.getElementById("plus").onclick = ()=>{
+document.getElementById("plus").onclick = () => {
   focus = Math.min(100, focus + 10);
-  updateFocus();
-};
-document.getElementById("minus").onclick = ()=>{
-  focus = Math.max(0, focus - 10);
-  updateFocus();
+  updateFocusUI();
 };
 
-function updateFocus(){
+document.getElementById("minus").onclick = () => {
+  focus = Math.max(0, focus - 10);
+  updateFocusUI();
+};
+
+function updateFocusUI() {
   focusValueEl.textContent = focus + "%";
   focusInput.value = focus;
 }
 
 /* =========================
-   ADVICE
+   NEXT MOVE ENGINE
    ========================= */
-function adviceFor(f){
-  if(f >= 80) return "High priority. Reach out or plan a meet.";
-  if(f >= 60) return "Good momentum. Stay consistent.";
-  if(f >= 30) return "Keep it steady. No pressure.";
-  return "Low priority. Do not over-invest.";
-}
-/* =========================
-   NEXT MOVE ENGINE — V2 ADD-ON
-   (Pure logic, no UI mutation)
-   ========================= */
-
 const NEXT_MOVES = {
   dating: {
     high: [
-      "Plan a proper date",
-      "Have a meaningful call",
-      "Talk about direction",
-      "Create quality time",
-      "Strengthen emotional bond",
-      "Be intentional today"
+      "Plan a quality date this week",
+      "Deep conversation about direction",
+      "Discuss future goals",
+      "Create a shared routine",
+      "Reinforce emotional security"
     ],
     mid: [
+      "Keep consistency without pressure",
       "Check in emotionally",
-      "Light call or voice note",
-      "Stay consistent",
-      "Show appreciation",
-      "Keep calm momentum"
+      "Casual call or voice note",
+      "Support her plans",
+      "Let things flow naturally"
     ],
     low: [
-      "Give her space",
-      "Respond only",
-      "Avoid heavy talk",
-      "Observe energy",
+      "Give space today",
+      "Respond but don’t push",
+      "Avoid heavy conversations",
+      "Focus on yourself today",
       "Do nothing today"
     ]
   },
   crush: {
     high: [
       "Flirt confidently",
+      "Compliment her vibe",
       "Suggest a casual meet",
-      "Increase attraction",
-      "Create mystery",
-      "Escalate playfully"
+      "Build playful tension",
+      "Move things forward"
     ],
     mid: [
       "Light teasing",
-      "Casual check-in",
       "Keep mystery",
-      "React to her energy",
-      "Avoid over-texting"
+      "Stay consistent",
+      "Casual check-in",
+      "Let her invest"
     ],
     low: [
-      "Pull back",
-      "Let her miss you",
+      "Pull back slightly",
+      "Observe from distance",
       "No chasing",
-      "Protect your energy",
-      "Stay silent"
+      "Minimal interaction",
+      "Stay silent today"
     ]
   },
   pause: [
-    "No action today",
-    "Do nothing",
-    "Reset emotionally",
+    "Do nothing today",
+    "No contact",
+    "Reset emotional energy",
     "Focus on yourself",
-    "Let time pass"
+    "Wait and observe"
   ]
 };
 
@@ -138,34 +129,31 @@ function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function nextMoveFor(person) {
-  const f = person.focus;
-  const s = person.status;
-
-  if (f <= 20 || s === "pause") {
+function getNextMove(p) {
+  if (p.status === "pause" || p.focus <= 20) {
     return pickRandom(NEXT_MOVES.pause);
   }
 
-  if (s === "dating") {
-    if (f >= 80) return pickRandom(NEXT_MOVES.dating.high);
-    if (f >= 50) return pickRandom(NEXT_MOVES.dating.mid);
+  if (p.status === "dating") {
+    if (p.focus >= 80) return pickRandom(NEXT_MOVES.dating.high);
+    if (p.focus >= 40) return pickRandom(NEXT_MOVES.dating.mid);
     return pickRandom(NEXT_MOVES.dating.low);
   }
 
-  if (s === "crush") {
-    if (f >= 60) return pickRandom(NEXT_MOVES.crush.high);
-    if (f >= 30) return pickRandom(NEXT_MOVES.crush.mid);
+  if (p.status === "crush") {
+    if (p.focus >= 60) return pickRandom(NEXT_MOVES.crush.high);
+    if (p.focus >= 30) return pickRandom(NEXT_MOVES.crush.mid);
     return pickRandom(NEXT_MOVES.crush.low);
   }
 
-  return "No action today";
+  return "Stay steady.";
 }
 
 /* =========================
-   DASHBOARD
+   DASHBOARD (SAFE)
    ========================= */
-function updateDashboard(){
-  if(!people.length){
+function updateDashboard() {
+  if (!people.length) {
     dashFocus.textContent = "—";
     dashPause.textContent = "—";
     dashAction.textContent = "Add someone to begin.";
@@ -173,48 +161,48 @@ function updateDashboard(){
   }
 
   const paused = people.filter(p => p.focus <= 20);
+
   const candidates = people
     .filter(p =>
-      (p.status === "dating" && p.focus > 80) ||
-      (p.status === "crush" && p.focus > 60)
+      (p.status === "dating" && p.focus >= 80) ||
+      (p.status === "crush" && p.focus >= 60)
     )
-    .sort((a,b)=>b.focus-a.focus)
-    .slice(0,2);
+    .sort((a, b) => b.focus - a.focus)
+    .slice(0, 2);
 
   dashFocus.textContent = candidates.length
-    ? candidates.map(p=>p.name).join(", ")
+    ? candidates.map(p => p.name).join(", ")
     : "—";
 
   dashPause.textContent = paused.length
-    ? paused.map(p=>p.name).join(", ")
+    ? paused.map(p => p.name).join(", ")
     : "—";
 
   dashAction.textContent = candidates.length
-  ? (candidates[0].nextMove || adviceFor(candidates[0].focus))
-  : "Stay steady.";
+    ? `${candidates[0].nextMove} — ${candidates[0].name}`
+    : "Stay steady.";
+}
 
 /* =========================
-   RENDER (REMINDER TEST ENABLED)
+   RENDER
    ========================= */
-function render(){
+function render() {
   list.innerHTML = "";
 
   const glowSet = new Set(
     people
       .filter(p =>
-        (p.status==="dating" && p.focus>80) ||
-        (p.status==="crush" && p.focus>60)
+        (p.status === "dating" && p.focus >= 80) ||
+        (p.status === "crush" && p.focus >= 60)
       )
-      .sort((a,b)=>b.focus-a.focus)
-      .slice(0,2)
-      .map(p=>p.name)
+      .slice(0, 2)
+      .map(p => p.name)
   );
 
-  people.forEach((p,i)=>{
+  people.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = `card person ${
-      p.focus<=20 ? "paused" :
-      glowSet.has(p.name) ? "glow" : ""
+      p.focus <= 20 ? "paused" : glowSet.has(p.name) ? "glow" : ""
     }`;
 
     card.innerHTML = `
@@ -226,80 +214,65 @@ function render(){
       </div>
       <div class="sub">${p.focus}% focus</div>
 
-      ${p.reminder
-        ? `<div class="reminder">⏰ ${p.reminder}</div>`
-        : ""}
+      ${p.reminder ? `<div class="reminder">⏰ ${p.reminder}</div>` : ""}
 
-      <div class="advice">${adviceFor(p.focus)}</div>
+      <div class="advice"><strong>Next Move:</strong> ${p.nextMove}</div>
 
       <div class="card-actions">
-        <button onclick="openEditModal(${i})">Edit</button>
+        <button onclick="openEdit(${i})">Edit</button>
         <button onclick="removePerson(${i})">Remove</button>
       </div>
     `;
     list.appendChild(card);
   });
 
-
   updateDashboard();
 }
 
 /* =========================
-   ADD
+   ADD PERSON
    ========================= */
-form.onsubmit = e=>{
+form.onsubmit = e => {
   e.preventDefault();
 
   const name = form.name.value.trim();
-  if(!name) return;
+  if (!name) return;
 
-  people.push({
-  name,
-  status: statusInput.value,
-  focus,
-  notes: form.notes.value.trim(),
-  reminder: form.reminder.value.trim(),
-  nextMove: "" // filled after save
-});
-people[people.length - 1].nextMove =
-  nextMoveFor(people[people.length - 1]);
+  const p = {
+    name,
+    status: statusInput.value,
+    focus,
+    notes: form.notes.value.trim(),
+    reminder: form.reminder.value.trim(),
+    nextMove: ""
+  };
+
+  p.nextMove = getNextMove(p);
+  people.push(p);
 
   save();
   render();
 
   form.reset();
   focus = 0;
-  updateFocus();
+  updateFocusUI();
 
-  document.querySelectorAll(".status-buttons button")
-    .forEach(b=>b.classList.remove("active"));
-  if(defaultBtn) defaultBtn.classList.add("active");
+  document
+    .querySelectorAll(".status-buttons button")
+    .forEach(b => b.classList.remove("active"));
+  if (defaultBtn) defaultBtn.classList.add("active");
 };
-
-/* =========================
-   SAVE / REMOVE
-   ========================= */
-function save(){
-  localStorage.setItem("rizz_people", JSON.stringify(people));
-}
-function removePerson(i){
-  people.splice(i,1);
-  save();
-  render();
-}
 
 /* =========================
    EDIT MODAL
    ========================= */
-let editingIndex = null;
-
 const editModal = document.getElementById("editModal");
 const editNameInput = document.getElementById("editNameInput");
 const editStatusSelect = document.getElementById("editStatusSelect");
 const editFocus = document.getElementById("editFocus");
 const editFocusValue = document.getElementById("editFocusValue");
 
-function openEditModal(i){
+function openEdit(i) {
   editingIndex = i;
   const p = people[i];
 
@@ -316,19 +289,20 @@ editFocus.oninput = () => {
   editFocusValue.textContent = editFocus.value + "%";
 };
 
-function closeEdit(){
+function closeEdit() {
   editModal.classList.add("hidden");
   document.body.style.overflow = "";
   editingIndex = null;
 }
 
-function saveEdit(){
-  if(editingIndex === null) return;
+function saveEdit() {
+  if (editingIndex === null) return;
 
   const p = people[editingIndex];
   p.name = editNameInput.value.trim();
   p.status = editStatusSelect.value;
-  p.focus = parseInt(editFocus.value,10) || 0;
+  p.focus = parseInt(editFocus.value, 10) || 0;
+  p.nextMove = getNextMove(p);
 
   save();
   render();
@@ -336,7 +310,20 @@ function saveEdit(){
 }
 
 /* =========================
+   REMOVE / SAVE
+   ========================= */
+function removePerson(i) {
+  people.splice(i, 1);
+  save();
+  render();
+}
+
+function save() {
+  localStorage.setItem("rizz_people", JSON.stringify(people));
+}
+
+/* =========================
    INIT
    ========================= */
-updateFocus();
+updateFocusUI();
 render();
