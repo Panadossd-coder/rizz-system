@@ -31,6 +31,7 @@ const focusInput = form.querySelector('[name="focus"]');
 let focus = 0;
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
 let editingIndex = null;
+let selectedStatus = "crush";
 
 /* =========================
    STATUS BUTTONS
@@ -41,7 +42,7 @@ document.querySelectorAll(".status-buttons button").forEach(btn => {
       .querySelectorAll(".status-buttons button")
       .forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    statusInput.value = btn.dataset.status;
+    selectedStatus = btn.dataset.status;
   };
 });
 
@@ -257,7 +258,7 @@ form.onsubmit = e => {
 
   const p = {
     name,
-    status: statusInput.value,
+    status: selectedStatus,
     focus,
     notes: form.notes.value.trim(),
     reminder: form.reminder.value.trim(),
@@ -278,6 +279,8 @@ form.onsubmit = e => {
     .querySelectorAll(".status-buttons button")
     .forEach(b => b.classList.remove("active"));
   if (defaultBtn) defaultBtn.classList.add("active");
+
+  selectedStatus = "crush";
 };
 
 /* =========================
