@@ -1,149 +1,100 @@
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+const form = document.getElementById("addForm");
+const list = document.getElementById("peopleList");
+
+const dashFocus = document.getElementById("dashFocus");
+const dashPause = document.getElementById("dashPause");
+const dashAction = document.getElementById("dashAction");
+
+const focusValueEl = document.getElementById("focusValue");
+const statusInput = form.querySelector('[name="status"]');
+
+let focus = 0;
+let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
+let editingIndex = null;
+
+/* STATUS */
+document.querySelectorAll(".status-buttons button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".status-buttons button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    statusInput.value = btn.dataset.status;
+  };
+});
+
+/* FOCUS */
+document.getElementById("plus").onclick = () => {
+  focus = Math.min(100, focus + 10);
+  updateFocus();
+};
+document.getElementById("minus").onclick = () => {
+  focus = Math.max(0, focus - 10);
+  updateFocus();
+};
+
+function updateFocus() {
+  focusValueEl.textContent = focus + "%";
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #000;
-  color: #fff;
-  overscroll-behavior: none;
+/* DASHBOARD */
+function updateDashboard() {
+  if (!people.length) {
+    dashFocus.textContent = "—";
+    dashPause.textContent = "—";
+    dashAction.textContent = "Add someone to begin.";
+    return;
+  }
+  dashFocus.textContent = people.map(p => p.name).join(", ");
 }
 
-body {
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+/* RENDER */
+function render() {
+  list.innerHTML = "";
+  people.forEach((p,i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <strong>${p.name}</strong>
+      <div>${p.focus}% focus</div>
+      <div class="card-actions">
+        <button onclick="openEdit(${i})">Edit</button>
+        <button onclick="removePerson(${i})">Remove</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+  updateDashboard();
 }
 
-.app {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 20px;
+/* ADD */
+form.onsubmit = e => {
+  e.preventDefault();
+  people.push({ name: form.name.value, focus });
+  localStorage.setItem("rizz_people", JSON.stringify(people));
+  render();
+  form.reset();
+  focus = 0;
+  updateFocus();
+};
+
+/* EDIT */
+function openEdit(i) {
+  editingIndex = i;
+  document.getElementById("editModal").classList.remove("hidden");
+}
+function closeEdit() {
+  document.getElementById("editModal").classList.add("hidden");
+}
+function saveEdit() {
+  closeEdit();
 }
 
-/* BASE CARD */
-.card {
-  background: rgba(14,14,18,0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 18px;
-  padding: 16px;
-  margin-bottom: 14px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+/* REMOVE */
+function removePerson(i) {
+  people.splice(i,1);
+  localStorage.setItem("rizz_people", JSON.stringify(people));
+  render();
 }
 
-/* DASHBOARD (ALIVE, SAFE) */
-.dashboard {
-  position: relative;
-  padding: 22px;
-  overflow: hidden;
-  animation: float 7s ease-in-out infinite;
-}
-
-.dashboard::before,
-.dashboard::after {
-  pointer-events: none;
-}
-
-.dashboard::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    120deg,
-    rgba(255,255,255,0.12),
-    rgba(255,255,255,0.02),
-    rgba(255,255,255,0.1)
-  );
-  opacity: 0.25;
-}
-
-.dashboard::after {
-  content: "";
-  position: absolute;
-  inset: -50%;
-  background: radial-gradient(circle, rgba(255,105,180,0.18), transparent 60%);
-  animation: sweep 10s linear infinite;
-}
-
-@keyframes sweep {
-  from { transform: translateX(-20%); }
-  to { transform: translateX(20%); }
-}
-
-@keyframes float {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
-}
-
-.dash-item span {
-  font-weight: 700;
-  color: #fff;
-}
-
-/* FORM */
-input, textarea, button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 12px;
-  border: none;
-  background: rgba(20,20,24,0.9);
-  color: #fff;
-}
-
-.status-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.status-buttons button {
-  flex: 1;
-  background: rgba(255,255,255,0.05);
-}
-
-.status-buttons button.active {
-  background: linear-gradient(135deg,#ff6aa2,#ff99c8);
-  color: #000;
-}
-
-.focus-control {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-}
-
-.focus-control button {
-  background: linear-gradient(135deg,#ff6aa2,#ff99c8);
-  color: #000;
-  font-size: 26px;
-}
-
-/* EDIT MODAL */
-.edit-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.edit-modal.hidden {
-  display: none;
-}
-
-.edit-box {
-  background: #111;
-  padding: 16px;
-  border-radius: 16px;
-  width: 90%;
-}
-
-.edit-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-}
+updateFocus();
+render();
