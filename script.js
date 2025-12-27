@@ -151,7 +151,7 @@ function getNextMove(p) {
 }
 
 /* =========================
-   DASHBOARD (SAFE)
+   DASHBOARD
    ========================= */
 function updateDashboard() {
   if (!people.length) {
@@ -185,6 +185,72 @@ function updateDashboard() {
 }
 
 /* =========================
+   SMART NOTES (V2.2)
+   ========================= */
+const SMART_NOTE_KEYWORDS = {
+  met: 15,
+  called: 8,
+  "she initiated": 12,
+  kissed: 20,
+  chatted: 4,
+  ignored: -12,
+  "no reply": -8,
+  argued: -15,
+  "dry reply": -6,
+  "sent money": -5
+};
+
+const SMART_NOTE_TAGS = {
+  "#met": 15,
+  "#call": 8,
+  "#initiated": 12,
+  "#ignored": -12,
+  "#argued": -15
+};
+
+const SMART_MAX_DELTA = 30;
+const SMART_MIN_APPLY_THRESHOLD = 3;
+
+function normalizeText(s) {
+  return String(s || "").toLowerCase().replace(/[.,;!]/g, " ");
+}
+
+function computeNoteDelta(notes, person) {
+  if (!notes) return 0;
+  const text = normalizeText(notes);
+  let total = 0;
+
+  Object.keys(SMART_NOTE_KEYWORDS).forEach(k => {
+    const re = new RegExp("\\b" + k.replace(/\s+/g, "\\s+") + "\\b", "gi");
+    const count = (text.match(re) || []).length;
+    if (count) {
+      const base = SMART_NOTE_KEYWORDS[k];
+      const multiplier = Math.max(0.3, 1 - 0.25 * (count - 1));
+      total += Math.round(base * multiplier);
+    }
+  });
+
+  Object.keys(SMART_NOTE_TAGS).forEach(tag => {
+    const count = (text.match(new RegExp(tag, "gi")) || []).length;
+    total += SMART_NOTE_TAGS[tag] * count;
+  });
+
+  if (person.status === "dating") total = Math.round(total * 0.6);
+  if (person.status === "pause") total = Math.round(total * 0.25);
+
+  return Math.max(-SMART_MAX_DELTA, Math.min(SMART_MAX_DELTA, total));
+}
+
+function formatDelta(delta) {
+  if (!delta) return "Suggested: —";
+  return `Suggested: ${delta > 0 ? "+" : ""}${delta}`;
+}
+
+function applyDelta(p, delta) {
+  p.focus = Math.max(0, Math.min(100, p.focus + delta));
+}
+
+/* =========================
    RENDER
    ========================= */
 function escapeHtml(s) {
@@ -214,25 +280,17 @@ function render() {
   people.forEach((p, i) => {
     const card = document.createElement("div");
     card.className = `card person ${
-      (parseInt(p.focus,10) <= 20)
-        ? "paused"
-        : (glowSet.has(p.name) ? "glow" : "")
+      p.focus <= 20 ? "paused" : glowSet.has(p.name) ? "glow" : ""
     }`;
-
-    const reminderHtml = p.reminder
-      ? `<div class="reminder">⏰ ${escapeHtml(p.reminder)}</div>`
-      : "";
 
     card.innerHTML = `
       <strong>${escapeHtml(p.name)}</strong>
       <span class="sub">${escapeHtml(p.status)}</span>
 
-      <div class="focus-bar" aria-hidden="true">
-        <div class="focus-fill" style="width:${escapeHtml(p.focus)}%"></div>
+      <div class="focus-bar">
+        <div class="focus-fill" style="width:${p.focus}%"></div>
       </div>
-      <div class="sub">${escapeHtml(p.focus)}% focus</div>
-
-      ${reminderHtml}
+      <div class="sub">${p.focus}% focus</div>
 
       <div class="advice"><strong>Next Move:</strong> ${escapeHtml(p.nextMove)}</div>
 
@@ -260,7 +318,7 @@ form.onsubmit = e => {
     name,
     status: selectedStatus,
     focus,
-    notes: form.notes.value.trim(),
+    notes: "",
     reminder: form.reminder.value.trim(),
     nextMove: ""
   };
@@ -274,12 +332,6 @@ form.onsubmit = e => {
   form.reset();
   focus = 0;
   updateFocusUI();
-
-  document
-    .querySelectorAll(".status-buttons button")
-    .forEach(b => b.classList.remove("active"));
-  if (defaultBtn) defaultBtn.classList.add("active");
-
   selectedStatus = "crush";
 };
 
@@ -296,13 +348,26 @@ function openEdit(i) {
   editingIndex = i;
   const p = people[i];
 
-  editNameInput.value = p.name || "";
-  editStatusSelect.value = p.status || "crush";
-  editFocus.value = p.focus || 0;
-  editFocusValue.textContent = (p.focus || 0) + "%";
+  editNameInput.value = p.name;
+  editStatusSelect.value = p.status;
+  editFocus.value = p.focus;
+  editFocusValue.textContent = p.focus + "%";
+
+  const editNotes = document.getElementById("editNotes");
+  const smartSuggestion = document.getElementById("smartSuggestion");
+  const applySmartNotes = document.getElementById("applySmartNotes");
+
+  editNotes.value = p.notes || "";
+  applySmartNotes.checked = false;
+  smartSuggestion.textContent = formatDelta(computeNoteDelta(editNotes.value, p));
+
+  editNotes.oninput = () => {
+    smartSuggestion.textContent = formatDelta(
+      computeNoteDelta(editNotes.value, { status: editStatusSelect.value })
+    );
+  };
 
   editModal.classList.remove("hidden");
-  editModal.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden";
 }
 
@@ -312,7 +377,6 @@ editFocus.oninput = () => {
 
 function closeEdit() {
   editModal.classList.add("hidden");
-  editModal.setAttribute("aria-hidden","true");
   document.body.style.overflow = "";
   editingIndex = null;
 }
@@ -321,9 +385,20 @@ function saveEdit() {
   if (editingIndex === null) return;
 
   const p = people[editingIndex];
-  p.name = editNameInput.value.trim() || p.name;
+  p.name = editNameInput.value.trim();
   p.status = editStatusSelect.value;
-  p.focus = Math.max(0, Math.min(100, parseInt(editFocus.value, 10) || 0));
+  p.focus = parseInt(editFocus.value, 10) || 0;
+
+  const editNotes = document.getElementById("editNotes");
+  const applySmartNotes = document.getElementById("applySmartNotes");
+  const delta = computeNoteDelta(editNotes.value, p);
+
+  p.notes = editNotes.value.trim();
+
+  if (applySmartNotes.checked && Math.abs(delta) >= SMART_MIN_APPLY_THRESHOLD) {
+    applyDelta(p, delta);
+  }
+
   p.nextMove = getNextMove(p);
 
   save();
