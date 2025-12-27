@@ -1,252 +1,149 @@
-/* =========================
-   Rizz Web — Version 2
-   JS (Reminder Test Mode)
-   ⚠️ ONLY adds testing output
-   ========================= */
-
-/* click sound */
-const clickSound = document.getElementById("clickSound");
-document.addEventListener("click", e => {
-  const btn = e.target.closest("button");
-  if (!btn || !clickSound) return;
-  try {
-    clickSound.currentTime = 0;
-    clickSound.volume = 0.35;
-    clickSound.play().catch(()=>{});
-  } catch(e){}
-});
-
-/* core elements */
-const form = document.getElementById("addForm");
-const list = document.getElementById("peopleList");
-
-const dashFocus = document.getElementById("dashFocus");
-const dashPause = document.getElementById("dashPause");
-const dashAction = document.getElementById("dashAction");
-
-const focusValueEl = document.getElementById("focusValue");
-const statusInput = form.querySelector('[name="status"]');
-const focusInput = form.querySelector('[name="focus"]');
-
-/* state */
-let focus = 0;
-let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
-
-/* =========================
-   STATUS BUTTONS
-   ========================= */
-document.querySelectorAll(".status-buttons button").forEach(btn=>{
-  btn.onclick = ()=>{
-    document.querySelectorAll(".status-buttons button")
-      .forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    statusInput.value = btn.dataset.status;
-  };
-});
-const defaultBtn = document.querySelector('[data-status="crush"]');
-if(defaultBtn) defaultBtn.classList.add("active");
-
-/* =========================
-   FOCUS CONTROLS
-   ========================= */
-document.getElementById("plus").onclick = ()=>{
-  focus = Math.min(100, focus + 10);
-  updateFocus();
-};
-document.getElementById("minus").onclick = ()=>{
-  focus = Math.max(0, focus - 10);
-  updateFocus();
-};
-
-function updateFocus(){
-  focusValueEl.textContent = focus + "%";
-  focusInput.value = focus;
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* =========================
-   ADVICE
-   ========================= */
-function adviceFor(f){
-  if(f >= 80) return "High priority. Reach out or plan a meet.";
-  if(f >= 60) return "Good momentum. Stay consistent.";
-  if(f >= 30) return "Keep it steady. No pressure.";
-  return "Low priority. Do not over-invest.";
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  color: #fff;
+  overscroll-behavior: none;
 }
 
-/* =========================
-   DASHBOARD
-   ========================= */
-function updateDashboard(){
-  if(!people.length){
-    dashFocus.textContent = "—";
-    dashPause.textContent = "—";
-    dashAction.textContent = "Add someone to begin.";
-    return;
-  }
-
-  const paused = people.filter(p => p.focus <= 20);
-  const candidates = people
-    .filter(p =>
-      (p.status === "dating" && p.focus > 80) ||
-      (p.status === "crush" && p.focus > 60)
-    )
-    .sort((a,b)=>b.focus-a.focus)
-    .slice(0,2);
-
-  dashFocus.textContent = candidates.length
-    ? candidates.map(p=>p.name).join(", ")
-    : "—";
-
-  dashPause.textContent = paused.length
-    ? paused.map(p=>p.name).join(", ")
-    : "—";
-
-  dashAction.textContent = candidates.length
-    ? adviceFor(candidates[0].focus)
-    : "Stay steady.";
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* =========================
-   RENDER (REMINDER TEST ENABLED)
-   ========================= */
-function render(){
-  list.innerHTML = "";
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-  const glowSet = new Set(
-    people
-      .filter(p =>
-        (p.status==="dating" && p.focus>80) ||
-        (p.status==="crush" && p.focus>60)
-      )
-      .sort((a,b)=>b.focus-a.focus)
-      .slice(0,2)
-      .map(p=>p.name)
+/* BASE CARD */
+.card {
+  background: rgba(14,14,18,0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+}
+
+/* DASHBOARD (ALIVE, SAFE) */
+.dashboard {
+  position: relative;
+  padding: 22px;
+  overflow: hidden;
+  animation: float 7s ease-in-out infinite;
+}
+
+.dashboard::before,
+.dashboard::after {
+  pointer-events: none;
+}
+
+.dashboard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.12),
+    rgba(255,255,255,0.02),
+    rgba(255,255,255,0.1)
   );
-
-  people.forEach((p,i)=>{
-    const card = document.createElement("div");
-    card.className = `card person ${
-      p.focus<=20 ? "paused" :
-      glowSet.has(p.name) ? "glow" : ""
-    }`;
-
-    card.innerHTML = `
-      <strong>${p.name}</strong>
-      <span class="sub">${p.status}</span>
-
-      <div class="focus-bar">
-        <div class="focus-fill" style="width:${p.focus}%"></div>
-      </div>
-      <div class="sub">${p.focus}% focus</div>
-
-      ${p.reminder
-        ? `<div class="reminder">⏰ ${p.reminder}</div>`
-        : ""}
-
-      <div class="advice">${adviceFor(p.focus)}</div>
-
-      <div class="card-actions">
-        <button onclick="openEditModal(${i})">Edit</button>
-        <button onclick="removePerson(${i})">Remove</button>
-      </div>
-    `;
-    list.appendChild(card);
-  });
-
-
-  updateDashboard();
+  opacity: 0.25;
 }
 
-/* =========================
-   ADD
-   ========================= */
-form.onsubmit = e=>{
-  e.preventDefault();
-
-  const name = form.name.value.trim();
-  if(!name) return;
-
-  people.push({
-    name,
-    status: statusInput.value,
-    focus,
-    notes: form.notes.value.trim(),
-    reminder: form.reminder.value.trim()
-  });
-
-  save();
-  render();
-
-  form.reset();
-  focus = 0;
-  updateFocus();
-
-  document.querySelectorAll(".status-buttons button")
-    .forEach(b=>b.classList.remove("active"));
-  if(defaultBtn) defaultBtn.classList.add("active");
-};
-
-/* =========================
-   SAVE / REMOVE
-   ========================= */
-function save(){
-  localStorage.setItem("rizz_people", JSON.stringify(people));
-}
-function removePerson(i){
-  people.splice(i,1);
-  save();
-  render();
+.dashboard::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle, rgba(255,105,180,0.18), transparent 60%);
+  animation: sweep 10s linear infinite;
 }
 
-/* =========================
-   EDIT MODAL
-   ========================= */
-let editingIndex = null;
-
-const editModal = document.getElementById("editModal");
-const editNameInput = document.getElementById("editNameInput");
-const editStatusSelect = document.getElementById("editStatusSelect");
-const editFocus = document.getElementById("editFocus");
-const editFocusValue = document.getElementById("editFocusValue");
-
-function openEditModal(i){
-  editingIndex = i;
-  const p = people[i];
-
-  editNameInput.value = p.name;
-  editStatusSelect.value = p.status;
-  editFocus.value = p.focus;
-  editFocusValue.textContent = p.focus + "%";
-
-  editModal.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
+@keyframes sweep {
+  from { transform: translateX(-20%); }
+  to { transform: translateX(20%); }
 }
 
-editFocus.oninput = () => {
-  editFocusValue.textContent = editFocus.value + "%";
-};
-
-function closeEdit(){
-  editModal.classList.add("hidden");
-  document.body.style.overflow = "";
-  editingIndex = null;
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
 }
 
-function saveEdit(){
-  if(editingIndex === null) return;
-
-  const p = people[editingIndex];
-  p.name = editNameInput.value.trim();
-  p.status = editStatusSelect.value;
-  p.focus = parseInt(editFocus.value,10) || 0;
-
-  save();
-  render();
-  closeEdit();
+.dash-item span {
+  font-weight: 700;
+  color: #fff;
 }
 
-/* =========================
-   INIT
-   ========================= */
-updateFocus();
-render();
+/* FORM */
+input, textarea, button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(20,20,24,0.9);
+  color: #fff;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.status-buttons button {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+}
+
+.status-buttons button.active {
+  background: linear-gradient(135deg,#ff6aa2,#ff99c8);
+  color: #000;
+}
+
+.focus-control {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+}
+
+.focus-control button {
+  background: linear-gradient(135deg,#ff6aa2,#ff99c8);
+  color: #000;
+  font-size: 26px;
+}
+
+/* EDIT MODAL */
+.edit-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.edit-modal.hidden {
+  display: none;
+}
+
+.edit-box {
+  background: #111;
+  padding: 16px;
+  border-radius: 16px;
+  width: 90%;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
