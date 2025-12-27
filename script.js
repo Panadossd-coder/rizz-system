@@ -1,54 +1,36 @@
 const form = document.getElementById("addForm");
 const list = document.getElementById("peopleList");
+
 const dashFocus = document.getElementById("dashFocus");
 const dashPause = document.getElementById("dashPause");
 const dashAction = document.getElementById("dashAction");
 
+const focusValueEl = document.getElementById("focusValue");
+const statusInput = form.status;
+
 let focus = 0;
 let people = JSON.parse(localStorage.getItem("rizz_people")) || [];
-let editingIndex = null;
 
-/* STATUS BUTTONS */
+/* STATUS */
 document.querySelectorAll(".status-buttons button").forEach(btn=>{
-  btn.onclick=()=>{
+  btn.onclick = ()=>{
     document.querySelectorAll(".status-buttons button").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
-    form.status.value = btn.dataset.status;
+    statusInput.value = btn.dataset.status;
   };
 });
 document.querySelector('[data-status="crush"]').classList.add("active");
 
 /* FOCUS */
-plus.onclick=()=>{focus=Math.min(100,focus+10);updateFocus();}
-minus.onclick=()=>{focus=Math.max(0,focus-10);updateFocus();}
-function updateFocus(){ focusValue.textContent=focus+"%"; form.focus.value=focus; }
+plus.onclick = ()=>{ focus=Math.min(100,focus+10); updateFocus(); };
+minus.onclick = ()=>{ focus=Math.max(0,focus-10); updateFocus(); };
 
-/* NEXT MOVE */
-function nextMove(p){
-  if(p.focus>=80) return "Compliment her vibe";
-  if(p.focus>=40) return "Keep steady";
-  return "Do not over-invest";
+function updateFocus(){
+  focusValueEl.textContent = focus+"%";
+  form.focus.value = focus;
 }
 
-/* RENDER */
-function render(){
-  list.innerHTML="";
-  people.forEach((p,i)=>{
-    const div=document.createElement("div");
-    div.className="card person "+(p.focus>=80?"glow":"");
-    div.innerHTML=`
-      <strong>${p.name}</strong>
-      <div>${p.focus}% focus</div>
-      <div class="advice">Next Move: ${p.nextMove}</div>
-      <div class="card-actions">
-        <button onclick="openEdit(${i})">Edit</button>
-        <button onclick="removePerson(${i})">Remove</button>
-      </div>`;
-    list.appendChild(div);
-  });
-  updateDashboard();
-}
-
+/* DASH */
 function updateDashboard(){
   if(!people.length){
     dashFocus.textContent="—";
@@ -56,39 +38,60 @@ function updateDashboard(){
     dashAction.textContent="Add someone to begin.";
     return;
   }
-  const top=people.sort((a,b)=>b.focus-a.focus)[0];
-  dashFocus.textContent=top.name;
-  dashAction.textContent=top.nextMove;
+  const top = people.sort((a,b)=>b.focus-a.focus)[0];
+  dashFocus.textContent = top.name;
+  dashAction.textContent = top.focus<=20?"Do not over-invest":"Compliment her vibe";
 }
 
+/* RENDER */
+function render(){
+  list.innerHTML="";
+  people.forEach((p,i)=>{
+    const card=document.createElement("div");
+    card.className="card person"+(p.focus<=20?" low":"");
+    card.innerHTML=`
+      <strong>${p.name}</strong><br>
+      ${p.focus}% focus<br>
+      <em>Next Move: ${p.focus<=20?"Do not over-invest":"Compliment her vibe"}</em>
+      <div class="card-actions">
+        <button onclick="openEdit(${i})">Edit</button>
+        <button onclick="removePerson(${i})">Remove</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  updateDashboard();
+}
+
+/* ADD */
 form.onsubmit=e=>{
   e.preventDefault();
-  const p={name:form.name.value,status:form.status.value,focus,nextMove:""};
-  p.nextMove=nextMove(p);
-  people.push(p);
-  save(); render();
-  form.reset(); focus=0; updateFocus();
+  people.push({name:form.name.value,focus,status:statusInput.value});
+  localStorage.setItem("rizz_people",JSON.stringify(people));
+  form.reset(); focus=0; updateFocus(); render();
 };
 
-function removePerson(i){ people.splice(i,1); save(); render(); }
-function save(){ localStorage.setItem("rizz_people",JSON.stringify(people)); }
+function removePerson(i){
+  people.splice(i,1);
+  localStorage.setItem("rizz_people",JSON.stringify(people));
+  render();
+}
 
 /* EDIT */
+let editIndex=null;
 function openEdit(i){
-  editingIndex=i;
+  editIndex=i;
   editModal.classList.remove("hidden");
   editNameInput.value=people[i].name;
   editFocus.value=people[i].focus;
   editFocusValue.textContent=people[i].focus+"%";
 }
-editFocus.oninput=()=>editFocusValue.textContent=editFocus.value+"%";
 function closeEdit(){ editModal.classList.add("hidden"); }
+editFocus.oninput=()=>editFocusValue.textContent=editFocus.value+"%";
 function saveEdit(){
-  const p=people[editingIndex];
-  p.name=editNameInput.value;
-  p.focus=parseInt(editFocus.value);
-  p.nextMove=nextMove(p);
-  save(); render(); closeEdit();
+  people[editIndex].name=editNameInput.value;
+  people[editIndex].focus=parseInt(editFocus.value);
+  localStorage.setItem("rizz_people",JSON.stringify(people));
+  closeEdit(); render();
 }
 
-render();
+updateFocus(); render();
