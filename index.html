@@ -2,17 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Rizz Web — Version 2</title>
-
-  <!-- iOS SAFARI BLACK FIX -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#000000" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
+  <title>Rizz Web — Version 2 (Upgrade)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <div class="app">
     <h1>Rizz Web</h1>
@@ -38,6 +31,7 @@
         <button type="button" data-status="dating">💞 Dating</button>
         <button type="button" data-status="pause">⏸ Pause</button>
       </div>
+
       <input type="hidden" name="status" value="crush" />
 
       <div class="label">Set Focus</div>
@@ -46,10 +40,11 @@
         <span id="focusValue">0%</span>
         <button type="button" id="plus">+</button>
       </div>
+
       <input type="hidden" name="focus" value="0" />
 
       <textarea name="notes" placeholder="Notes"></textarea>
-      <input name="reminder" placeholder="Reminder (optional)" />
+      <input name="reminder" placeholder="Reminder (optional text; used to mark a reminder)" />
 
       <button type="submit">Add</button>
     </form>
@@ -57,7 +52,8 @@
     <div id="peopleList"></div>
   </div>
 
-  <!-- EDIT MODAL -->
+  <audio id="clickSound" src="click.mp3" preload="auto"></audio>
+
   <div id="editModal" class="edit-modal hidden">
     <div class="edit-box">
       <h3>Edit</h3>
@@ -69,7 +65,6 @@
       </select>
       <input type="range" id="editFocus" min="0" max="100" />
       <div id="editFocusValue">0%</div>
-
       <div class="edit-actions">
         <button class="cancel" onclick="closeEdit()">Cancel</button>
         <button onclick="saveEdit()">Save</button>
